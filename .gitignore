@@ -1,0 +1,8 @@
+*.pyc
+py3.8/
+datasets/
+logs/
+results/
+runs/
+core
+__pycache__
