@@ -58,7 +58,8 @@ class BinarizeConv2dSDP(nn.Module):
         self.M = nn.Parameter(torch.zeros((self.shape_sum_w)), requires_grad=True)
         self.Z = nn.Parameter(torch.zeros((self.shape_w)), requires_grad=True)
         torch.nn.init.xavier_normal_(self.M.data)
-        torch.nn.init.xavier_uniform_(self.Z.data)
+        # torch.nn.init.xavier_uniform_(self.Z.data)
+        torch.nn.init.xavier_normal(self.Z.data)
 
         #torch.nn.init.xavier_normal_(self.weights.data)
         #self.weights.data = torch.normal(0.0, 1.0,size=self.shape_sum_w).cuda() 
