@@ -83,7 +83,7 @@ class BinarizeConv2dSDP(nn.Module):
             z.data = z.data / torch.sqrt(A)
 
         # w = sdp(m, z, torch.tensor(self.scale), torch.tensor(self.K))
-        w = SDP().apply(m, z, torch.tensor(self.scale), torch.tensor(self.K))
+        w = SDP().apply(m, z, torch.tensor(self.scale), torch.tensor(self.K), self.training)
         real_weights = w.view(self.shape_sum_w)
         bw = BinaryQuantize().apply(real_weights)
 
@@ -102,10 +102,14 @@ class BinarizeConv2dSDP(nn.Module):
 
 class SDP(Function):
     @staticmethod
-    def forward(ctx, m, z, scale, K):
+    def forward(ctx, m, z, scale, K, training=True):
         rv = torch.normal(0.0, 1.0/np.sqrt(scale.item()), size=(1, K.item())).cuda()
         zz = torch.mm(rv, z)
-        w = zz + m
+        # w = zz + m
+        if training is True:
+            w = zz + m
+        else:
+            w = m
         ctx.save_for_backward(K, rv, scale)
         
         return w
@@ -119,7 +123,7 @@ class SDP(Function):
         # print(f'grad_m: {grad_m}')
         grad_z = torch.mm(rv.T, grad_input2) * np.sqrt(scale.item())
         # print(f'grad_z: {grad_z}')
-        return grad_m, grad_z, None, None
+        return grad_m, grad_z, None, None, None
 
 
 class BinaryQuantize(Function):
