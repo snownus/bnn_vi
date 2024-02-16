@@ -110,12 +110,8 @@ def main():
     logging.info("saving to %s", save_path)
     logging.debug("run arguments: %s", args)
 
-    if 'cuda' in args.type:
-        args.gpus = [int(i) for i in args.gpus.split(',')]
-        torch.cuda.set_device(args.gpus[0])
-        cudnn.benchmark = True
-    else:
-        args.gpus = None
+    os.environ['CUDA_VISIBLE_DEVICES'] = args.gpus 
+    cudnn.benchmark = True
 
     # create model
     logging.info("creating model %s", args.model)
@@ -153,8 +149,6 @@ def main():
                          checkpoint_file, checkpoint['epoch'])
         else:
             logging.error("no checkpoint found at '%s'", args.resume)
-
-
 
     # Data loading code
     default_transform = {
@@ -200,19 +194,23 @@ def main():
         batch_size=args.batch_size, shuffle=True,
         num_workers=args.workers, pin_memory=True)
 
-    for epoch in range(args.start_epoch, args.epochs):
-        num_parameters = sum([l.nelement() for l in model.parameters()])
-        binary_num_parameters = 0
-        fp_num_parameters = 0
-        for l in list(model.parameters()):
-            if hasattr(l,'binary'):
-                binary_num_parameters = binary_num_parameters + l.nelement()
-            else:
-                fp_num_parameters = fp_num_parameters + l.nelement()
-        logging.info("number of parameters: %d", num_parameters)
-        logging.info("number of binary parameters: %d", binary_num_parameters)
-        logging.info("number of full precision parameters: %d", fp_num_parameters)
+    num_parameters = sum([l.nelement() for l in model.parameters()])
+    binary_num_parameters = 0
+    fp_num_parameters = 0
+    for l in list(model.parameters()):
+        if hasattr(l,'binary'):
+            binary_num_parameters = binary_num_parameters + l.nelement()
+        else:
+            fp_num_parameters = fp_num_parameters + l.nelement()
+    logging.info("number of parameters: %d", num_parameters)
+    logging.info("number of binary parameters: %d", binary_num_parameters)
+    logging.info("number of full precision parameters: %d", fp_num_parameters)
 
+    model= nn.DataParallel(model)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model.to(device)
+
+    for epoch in range(args.start_epoch, args.epochs):
         bin_parameters = []
         fp_parameters = []
         # flip number per epoch
@@ -304,9 +302,6 @@ def weight_histograms(writer, step, model):
 
 def forward(data_loader, model, criterion, epoch=0, training=True, fp_optimizer=None):
     global writer, loss_idx_value
-
-    if args.gpus and len(args.gpus) > 1:
-        model = torch.nn.DataParallel(model, args.gpus)
     batch_time = AverageMeter()
     data_time = AverageMeter()
     losses = AverageMeter()
@@ -317,8 +312,8 @@ def forward(data_loader, model, criterion, epoch=0, training=True, fp_optimizer=
     iters = 0
     for i, (inputs, target) in enumerate(data_loader):
       # Write the network graph at epoch 0, batch 0
-        if epoch == 0 and i == 0:
-            writer.add_graph(model, input_to_model=inputs[0:2].cuda(), verbose=False)
+        # if epoch == 0 and i == 0:
+        #     writer.add_graph(model, input_to_model=inputs[0:2], verbose=False)
 
         # measure data loading time
         data_time.update(time.time() - end)
