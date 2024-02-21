@@ -85,6 +85,11 @@ parser.add_argument('-K', default=2, type=int, help='K value')
 parser.add_argument('-scale', default=1, type=float, help='variance scale hyper-parameter')
 parser.add_argument('-iters', default=1, type=int, help='init iters for gradients')
 
+parser.add_argument('--lr', type=float, default=0.5, metavar='LR',
+                        help='learning rate (default: 3e-4)')
+parser.add_argument('--momentum', type=float, default=0.9, metavar='M',
+                    help='BayesBiNN momentum (default: 0.9)')
+
 
 writer = SummaryWriter()
 loss_idx_value = 0
@@ -210,33 +215,41 @@ def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
 
-    for epoch in range(args.start_epoch, args.epochs):
-        bin_parameters = []
-        fp_parameters = []
-        # flip number per epoch
-        for p in list(model.parameters()):
-            if hasattr(p,'binary'):
-                bin_parameters.append(p)  
-            else:
-                fp_parameters.append(p)
+    bin_parameters = []
+    fp_parameters = []
+    # flip number per epoch
+    for p in list(model.parameters()):
+        if hasattr(p,'binary'):
+            bin_parameters.append(p)  
+        else:
+            fp_parameters.append(p)
+    
+    fp_optimizer = torch.optim.SGD([{'params':fp_parameters}], lr=args.lr, momentum=args.momentum)
+    # optimizer = torch.optim.SGD(fp_parameters, lr=args.lr, momentum=0.9)
+    # lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(fp_optimizer, T_max = args.epochs, eta_min = 1e-3, last_epoch=-1)
+    lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(fp_optimizer, milestones=[90, 180], gamma=0.1)
 
-        fp_optimizer = torch.optim.Adam(fp_parameters, lr=0.001)
-        fp_optimizer = adjust_optimizer(fp_optimizer, epoch, fp_regime)
-        logging.info('training fp_regime: %s', fp_regime)
+    for epoch in range(args.start_epoch, args.epochs):
+        # fp_optimizer = torch.optim.Adam(fp_parameters, lr=0.001)
+        # fp_optimizer = adjust_optimizer(fp_optimizer, epoch, fp_regime)
+        # logging.info('training fp_regime: %s', fp_regime)
 
         # train for one epoch
-        train_loss, train_prec1, train_prec5 = train(
-            train_loader, model, criterion, epoch,fp_optimizer)
+        train_loss, train_prec1, train_prec5 = train(train_loader, model, criterion, epoch, fp_optimizer)
+        lr_scheduler.step()
 
         # evaluate on validation set
         val_loss, val_prec1, val_prec5 = validate(
             val_loader, model, criterion, epoch)
 
-        weight_histograms(writer, epoch, model)
+        # weight_histograms(writer, epoch, model)
+        writer.add_scalar("LR", fp_optimizer.param_groups[0]['lr'], epoch)
 
         # remember best prec@1 and save checkpoint
         is_best = val_prec1 > best_prec1
         best_prec1 = max(val_prec1, best_prec1)
+
+        writer.add_scalar("best_prec1", best_prec1, epoch)
 
         save_checkpoint({
             'epoch': epoch + 1,
