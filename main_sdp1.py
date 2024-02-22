@@ -342,30 +342,31 @@ def forward(data_loader, model, criterion, epoch=0, training=True, fp_optimizer=
                 total_loss = loss
                 total_output = output
 
-                for j in range(args.K):
-                    params = model.named_parameters()
-                    for name, param in params:
-                        # print(f'name: {name}, param.shape: {param.shape}')
-                        if 'sample' in name:
-                            param.zero_()
-                            param[0][j] = 1
-                    output = model(inputs)
-                    total_loss += criterion(output, target)
-                    total_output += output
+                # for j in range(args.K):
+                #     params = model.named_parameters()
+                #     for name, param in params:
+                #         # print(f'name: {name}, param.shape: {param.shape}')
+                #         if 'sample' in name:
+                #             param.zero_()
+                #             param[0][j] = 1
+                #     output = model(inputs)
+                #     total_loss += criterion(output, target)
+                #     total_output += output
 
-                for j in range(args.K):
-                    params = model.named_parameters()
-                    for name, param in params:
-                        # print(f'name: {name}, param.shape: {param.shape}')
-                        if 'sample' in name:
-                            param.zero_()
-                            param[0][j] = -1
-                    output = model(inputs)
-                    total_loss += criterion(output, target)
-                    total_output += output
+                # for j in range(args.K):
+                #     params = model.named_parameters()
+                #     for name, param in params:
+                #         # print(f'name: {name}, param.shape: {param.shape}')
+                #         if 'sample' in name:
+                #             param.zero_()
+                #             param[0][j] = -1
+                #     output = model(inputs)
+                #     total_loss += criterion(output, target)
+                #     total_output += output
         else:
+            # L = 10 * args.K
             output = model(inputs)
-            loss = criterion(output, target)
+            loss = criterion(output, target) * 5/6
             loss.backward()
             total_loss = loss
             total_output = output
@@ -378,7 +379,7 @@ def forward(data_loader, model, criterion, epoch=0, training=True, fp_optimizer=
                         param.zero_()
                         param[0][j] = 1
                 output = model(inputs)
-                loss = criterion(output, target)
+                loss = criterion(output, target) / (12 * args.K)
                 loss.backward()
                 total_loss += loss
                 total_output += output
@@ -391,15 +392,15 @@ def forward(data_loader, model, criterion, epoch=0, training=True, fp_optimizer=
                         param.zero_()
                         param[0][j] = -1
                 output = model(inputs)
-                loss = criterion(output, target)
+                loss = criterion(output, target) / (12 * args.K)
                 loss.backward()
                 total_loss += loss
                 total_output += output
 
-            with torch.no_grad():
-                for param in model.parameters():
-                    if param.grad is not None:
-                        param.grad /= (2 * args.K + 1)
+            # with torch.no_grad():
+            #     for param in model.parameters():
+            #         if param.grad is not None:
+            #             param.grad /= (2 * args.K + 1)
 
             fp_optimizer.step()
             fp_optimizer.zero_grad()
