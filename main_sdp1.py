@@ -335,62 +335,91 @@ def forward(data_loader, model, criterion, epoch=0, training=True, fp_optimizer=
             target = target.cuda()
 
         if not training:
+            model.eval()
             with torch.no_grad():
                 output = model(inputs)
                 loss = criterion(output, target)
-        else:
-            # update scale
-            # 63.930
-            # if epoch >= 0:
-            #     state_dict = model.state_dict()
-            #     new_state_dict = copy.deepcopynux(state_dict)
-            #     for name, param_ in state_dict.items():
-            #         if 'scale' in name:
-            #             # print(f'name: {name}')
-            #             a, b = 1 - pow(10, 6), 2 * pow(10, 8) - 100
-            #             if epoch >= 0:
-            #                 scale = a * epoch + b
-            #                 # print(f'param_: {param_}, param_.shape: {param_.shape}')
-            #                 new_state_dict[name] =  torch.ones(1, requires_grad=False) * scale
-            #     model.load_state_dict(new_state_dict)
+                total_loss = loss
+                total_output = output
 
+                for j in range(args.K):
+                    params = model.named_parameters()
+                    for name, param in params:
+                        # print(f'name: {name}, param.shape: {param.shape}')
+                        if 'sample' in name:
+                            param.zero_()
+                            param[0][j] = 1
+                    output = model(inputs)
+                    total_loss += criterion(output, target)
+                    total_output += output
+
+                for j in range(args.K):
+                    params = model.named_parameters()
+                    for name, param in params:
+                        # print(f'name: {name}, param.shape: {param.shape}')
+                        if 'sample' in name:
+                            param.zero_()
+                            param[0][j] = -1
+                    output = model(inputs)
+                    total_loss += criterion(output, target)
+                    total_output += output
+        else:
             output = model(inputs)
             loss = criterion(output, target)
+            loss.backward()
+            total_loss = loss
+            total_output = output
 
-        if type(output) is list:
-            output = output[0]
+            for j in range(args.K):
+                params = model.named_parameters()
+                for name, param in params:
+                    # print(f'name: {name}, param.shape: {param.shape}')
+                    if 'sample' in name:
+                        param.zero_()
+                        param[0][j] = 1
+                output = model(inputs)
+                loss = criterion(output, target)
+                loss.backward()
+                total_loss += loss
+                total_output += output
+
+            for j in range(args.K):
+                params = model.named_parameters()
+                for name, param in params:
+                    # print(f'name: {name}, param.shape: {param.shape}')
+                    if 'sample' in name:
+                        param.zero_()
+                        param[0][j] = -1
+                output = model(inputs)
+                loss = criterion(output, target)
+                loss.backward()
+                total_loss += loss
+                total_output += output
+
+            with torch.no_grad():
+                for param in model.parameters():
+                    if param.grad is not None:
+                        param.grad /= (2 * args.K + 1)
+
+            fp_optimizer.step()
+            fp_optimizer.zero_grad()
+
+        params = model.named_parameters()
+        for name, param in params:
+            if 'sample' in name:
+                param.zero_()
+
+        total_loss /= (2 * args.K + 1)
+        total_output /= (2 * args.K + 1)
+        if type(total_output) is list:
+            total_output = total_output[0]
 
         # measure accuracy and record loss
-        prec1, prec5 = accuracy(output.data, target, topk=(1, 5))
-        losses.update(loss.item(), inputs.size(0))
+        prec1, prec5 = accuracy(total_output.data, target, topk=(1, 5))
+        losses.update(total_loss.item(), inputs.size(0))
         top1.update(prec1.item(), inputs.size(0))
         top5.update(prec5.item(), inputs.size(0))
-
-        if training:
-            # compute gradient and do SGD step
-            # if iters == 0:
-            #     fp_optimizer.zero_grad()
-            fp_optimizer.zero_grad()
-            loss.backward()
-            # print("*")
-            # for p in list(model.parameters()):
-            #     if hasattr(p,'pre_binary_data'):
-            #         p.pre_binary_data = p.data.clone()
-            #         p.flip_num_epoch = torch.zeros_like(p.data)
-            #         p.flip_num_step = torch.zeros_like(p.data)
-            #     if hasattr(p,'org'):
-            #         p.data = p.org.clone()
-            # iters += 1
-            # if iters == args.iters:
-            #     with torch.no_grad():
-            #         for param in model.parameters():
-            #             if param.grad is not None:
-            #                 param.grad /= args.iters
-            #     fp_optimizer.step()
-            #     iters = 0
-            fp_optimizer.step()
-            # binarize_model(model,args.threshold,args.binarization)
-
+        
         # measure elapsed time
         batch_time.update(time.time() - end)
         end = time.time()
@@ -407,7 +436,7 @@ def forward(data_loader, model, criterion, epoch=0, training=True, fp_optimizer=
                              batch_time=batch_time,
                              data_time=data_time, loss=losses, top1=top1, top5=top5))
         
-        writer.add_scalar("Loss", loss, loss_idx_value)
+        writer.add_scalar("Loss", total_loss, loss_idx_value)
         loss_idx_value += 1
 
     return losses.avg, top1.avg, top5.avg

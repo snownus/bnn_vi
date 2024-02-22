@@ -59,13 +59,17 @@ class BinarizeConv2dSDP(nn.Module):
         self.Z = nn.Parameter(torch.zeros((self.shape_w)), requires_grad=True)
         torch.nn.init.xavier_normal_(self.M.data)
         # torch.nn.init.xavier_uniform_(self.Z.data)
-        torch.nn.init.xavier_normal(self.Z.data)
+        torch.nn.init.xavier_normal_(self.Z.data)
 
         #torch.nn.init.xavier_normal_(self.weights.data)
         #self.weights.data = torch.normal(0.0, 1.0,size=self.shape_sum_w).cuda() 
         self.linear = linear
         self.in_chn = in_chn
         self.out_chn = out_chn
+        
+        # get the i^th column of Z.
+        self.sample = nn.Parameter(torch.zeros((1, K)), requires_grad=False)
+        # self.register_buffer('sample', torch.zeros((1, K), requires_grad=False))
 
     def forward(self, input):
         # bw = BinaryQuantize().apply(self.weights)
@@ -83,7 +87,7 @@ class BinarizeConv2dSDP(nn.Module):
             z.data = z.data / torch.sqrt(A)
 
         # w = sdp(m, z, torch.tensor(self.scale), torch.tensor(self.K))
-        w = SDP().apply(m, z, torch.tensor(self.scale), torch.tensor(self.K), self.training)
+        w = SDP().apply(m, z, self.sample, torch.tensor(self.scale), torch.tensor(self.K), self.training)
         real_weights = w.view(self.shape_sum_w)
         bw = BinaryQuantize().apply(real_weights)
 
@@ -102,28 +106,36 @@ class BinarizeConv2dSDP(nn.Module):
 
 class SDP(Function):
     @staticmethod
-    def forward(ctx, m, z, scale, K, training=True):
+    def forward(ctx, m, z, sample, scale, K, training=True):
+        sample_sum = torch.sum(sample)
         rv = torch.normal(0.0, 1.0/np.sqrt(scale.item()), size=(1, K.item())).cuda()
+        if sample_sum == 1 or sample_sum == -1:
+            rv = sample
+        elif sample_sum != 0:
+            print(f'errors in sample Z!!!')
         zz = torch.mm(rv, z)
-        # w = zz + m
-        if training is True:
-            w = zz + m
-        else:
-            w = m
-        ctx.save_for_backward(K, rv, scale)
+        w = zz + m
+        # if training is True:
+        #     w = zz + m
+        # else:
+        #     w = m
+        grad_scaling = np.sqrt(scale)
+        if sample_sum == 1 or sample_sum == -1:
+            grad_scaling = torch.tensor(1.0).cuda()
+        ctx.save_for_backward(K, sample, rv, grad_scaling)
         
         return w
 
     @staticmethod
     def backward(ctx, grad_output):
         # print(f'aaa') two positive gradients -> 12.61; 
-        K, rv, scale = ctx.saved_tensors
+        K, sample, rv, grad_scaling = ctx.saved_tensors
         grad_input1, grad_input2 = grad_output.clone(), grad_output.clone()
         grad_m = grad_input1
         # print(f'grad_m: {grad_m}')
-        grad_z = torch.mm(rv.T, grad_input2) * np.sqrt(scale.item())
+        grad_z = torch.mm(rv.T, grad_input2) * grad_scaling
         # print(f'grad_z: {grad_z}')
-        return grad_m, grad_z, None, None, None
+        return grad_m, grad_z, None, None, None, None
 
 
 class BinaryQuantize(Function):
