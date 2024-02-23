@@ -114,11 +114,11 @@ class SDP(Function):
         elif sample_sum != 0:
             print(f'errors in sample Z!!!')
         zz = torch.mm(rv, z)
-        w = zz + m
-        # if training is True:
-        #     w = zz + m
-        # else:
-        #     w = m
+        # w = zz + m
+        if training is True:
+            w = zz + m
+        else:
+            w = m
         grad_scaling = np.sqrt(scale)
         if sample_sum == 1 or sample_sum == -1:
             grad_scaling = torch.tensor(1.0).cuda()

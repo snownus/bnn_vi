@@ -224,7 +224,7 @@ def main():
         else:
             fp_parameters.append(p)
     
-    fp_optimizer = torch.optim.SGD([{'params':fp_parameters}], lr=args.lr, momentum=args.momentum)
+    fp_optimizer = torch.optim.SGD([{'params':fp_parameters}], lr=args.lr, momentum=args.momentum, weight_decay=1e-4)
     # optimizer = torch.optim.SGD(fp_parameters, lr=args.lr, momentum=0.9)
     # lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(fp_optimizer, T_max = args.epochs, eta_min = 1e-3, last_epoch=-1)
     lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(fp_optimizer, milestones=[90, 180], gamma=0.1)
@@ -313,6 +313,13 @@ def weight_histograms(writer, step, model):
             layer_number += 1
 
 
+def sample_uniform_int(a, b):
+    # Sample a single integer from a uniform distribution between a and b (inclusive)
+    sampled_number = torch.randint(a, b + 1, (1,))
+    
+    return sampled_number.item()
+
+
 def forward(data_loader, model, criterion, epoch=0, training=True, fp_optimizer=None):
     global writer, loss_idx_value
     batch_time = AverageMeter()
@@ -364,14 +371,15 @@ def forward(data_loader, model, criterion, epoch=0, training=True, fp_optimizer=
                 #     total_loss += criterion(output, target)
                 #     total_output += output
         else:
-            # L = 10 * args.K
-            output = model(inputs)
-            loss = criterion(output, target) * 5/6
-            loss.backward()
-            total_loss = loss
-            total_output = output
-
-            for j in range(args.K):
+            # L = 100
+            L = args.K * 10
+            num = sample_uniform_int(0, L + args.K * 2 - 1)
+            if num < L:
+                output = model(inputs)
+                loss = criterion(output, target)
+                loss.backward()
+            elif L <= num < L + args.K:
+                j = num - L
                 params = model.named_parameters()
                 for name, param in params:
                     # print(f'name: {name}, param.shape: {param.shape}')
@@ -379,12 +387,10 @@ def forward(data_loader, model, criterion, epoch=0, training=True, fp_optimizer=
                         param.zero_()
                         param[0][j] = 1
                 output = model(inputs)
-                loss = criterion(output, target) / (12 * args.K)
+                loss = criterion(output, target) 
                 loss.backward()
-                total_loss += loss
-                total_output += output
-
-            for j in range(args.K):
+            else:
+                j = num - L - args.K
                 params = model.named_parameters()
                 for name, param in params:
                     # print(f'name: {name}, param.shape: {param.shape}')
@@ -392,10 +398,10 @@ def forward(data_loader, model, criterion, epoch=0, training=True, fp_optimizer=
                         param.zero_()
                         param[0][j] = -1
                 output = model(inputs)
-                loss = criterion(output, target) / (12 * args.K)
+                loss = criterion(output, target) 
                 loss.backward()
-                total_loss += loss
-                total_output += output
+            total_loss = loss
+            total_output = output
 
             # with torch.no_grad():
             #     for param in model.parameters():
@@ -410,8 +416,8 @@ def forward(data_loader, model, criterion, epoch=0, training=True, fp_optimizer=
             if 'sample' in name:
                 param.zero_()
 
-        total_loss /= (2 * args.K + 1)
-        total_output /= (2 * args.K + 1)
+        # total_loss /= (2 * args.K + 1)
+        # total_output /= (2 * args.K + 1)
         if type(total_output) is list:
             total_output = total_output[0]
 
