@@ -447,6 +447,8 @@ def forward(data_loader, model, criterion, epoch=0, training=True, fp_optimizer=
         writer.add_scalar("Loss", total_loss, loss_idx_value)
         loss_idx_value += 1
 
+    if training:
+        weight_histograms(writer, epoch, model)
     return losses.avg, top1.avg, top5.avg
 
 
