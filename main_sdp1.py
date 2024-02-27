@@ -215,28 +215,21 @@ def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
 
-    # bin_parameters = []
-    # fp_parameters = []
-    # for p in list(model.parameters()):
-    #     if hasattr(p,'binary'):
-    #         bin_parameters.append(p)  
-    #     else:
-    #         fp_parameters.append(p)
-    # fp_optimizer = torch.optim.SGD([{'params':fp_parameters}], lr=args.lr, momentum=args.momentum, weight_decay=1e-4)
+    fp_optimizer = torch.optim.SGD([{'params':model.parameters()}], lr=args.lr, momentum=args.momentum, weight_decay=1e-4)
 
-    # Group parameters based on names
-    params_with_decay = []
-    params_without_decay = []
-    for name, param in model.named_parameters():
-        if '.M' in name:
-            # print(f'name: {name}')
-            params_without_decay.append(param)
-        else:
-            params_with_decay.append(param)
-    fp_optimizer = torch.optim.SGD([
-        {'params': params_with_decay, 'weight_decay': 1e-4},  # Apply weight decay to specific parameters
-        {'params': params_without_decay}  # No weight decay for other parameters
-    ], lr=args.lr, momentum=args.momentum)
+    # Group parameters based on names. ISSUES: maybe some parameters not in model.named_parameters()
+    # params_with_decay = []
+    # params_without_decay = []
+    # for name, param in model.named_parameters():
+    #     if '.M' in name:
+    #         # print(f'name: {name}')
+    #         params_without_decay.append(param)
+    #     else:
+    #         params_with_decay.append(param)
+    # fp_optimizer = torch.optim.SGD([
+    #     {'params': params_with_decay, 'weight_decay': 1e-4},  # Apply weight decay to specific parameters
+    #     {'params': params_without_decay, 'weight_decay': 1e-4}  # No weight decay for other parameters
+    # ], lr=args.lr, momentum=args.momentum)
 
     lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(fp_optimizer, milestones=[90, 180], gamma=0.1)
 
@@ -299,7 +292,7 @@ def weight_histograms_W(writer, step, weights, layer_number):
   num_kernels = weights_shape[0]
   for k in range(num_kernels):
     flattened_weights = weights[k].flatten()
-    tag = f"layer_{layer_number}/W_{k}"
+    tag = f"layer_{layer_number}/M_{k}"
     writer.add_histogram(tag, flattened_weights, global_step=step, bins='tensorflow')
 
 
@@ -312,15 +305,26 @@ def weight_histograms_Z(writer, step, Z, layer_number):
         writer.add_histogram(tag, flattened_Z, global_step=step, bins='tensorflow')
 
 
-def weight_histograms(writer, step, model):
+def weight_histograms(writer, step, model, scale):
     print("Visualizing model weights...")
     layer_number = 0
-    for m in model.modules():
-        if isinstance(m, BinarizeConv2dSDP):
-            weights = m.M
-            weight_histograms_W(writer, step, weights, layer_number)
-            Z = m.Z
-            weight_histograms_Z(writer, step, Z, layer_number)
+    for module in model.modules():
+        if isinstance(module, BinarizeConv2dSDP):
+            m = copy.deepcopy(module.M)
+            z = copy.deepcopy(module.Z)
+            m_shape, z_shape = m.shape, z.shape
+            m = m.view(-1)
+            z = z.view(args.K, m.shape[0])
+            # visualize m and z after normalization.
+            A = m*m + torch.sum(z.T**2, dim=1)/scale
+            m.data = m.data / torch.sqrt(A)
+            z.data = z.data / torch.sqrt(A)
+
+            m = m.view(m_shape)
+            z = z.view(z_shape)
+
+            weight_histograms_W(writer, step, m, layer_number)
+            weight_histograms_Z(writer, step, z, layer_number)
             layer_number += 1
 
 
@@ -458,8 +462,8 @@ def forward(data_loader, model, criterion, epoch=0, training=True, fp_optimizer=
         writer.add_scalar("Loss", total_loss, loss_idx_value)
         loss_idx_value += 1
 
-    if training:
-        weight_histograms(writer, epoch, model)
+    if not training:
+        weight_histograms(writer, epoch, model, args.scale)
     return losses.avg, top1.avg, top5.avg
 
 
