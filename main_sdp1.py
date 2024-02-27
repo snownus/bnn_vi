@@ -215,18 +215,29 @@ def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
 
-    bin_parameters = []
-    fp_parameters = []
-    # flip number per epoch
-    for p in list(model.parameters()):
-        if hasattr(p,'binary'):
-            bin_parameters.append(p)  
+    # bin_parameters = []
+    # fp_parameters = []
+    # for p in list(model.parameters()):
+    #     if hasattr(p,'binary'):
+    #         bin_parameters.append(p)  
+    #     else:
+    #         fp_parameters.append(p)
+    # fp_optimizer = torch.optim.SGD([{'params':fp_parameters}], lr=args.lr, momentum=args.momentum, weight_decay=1e-4)
+
+    # Group parameters based on names
+    params_with_decay = []
+    params_without_decay = []
+    for name, param in model.named_parameters():
+        if '.M' in name:
+            # print(f'name: {name}')
+            params_without_decay.append(param)
         else:
-            fp_parameters.append(p)
-    
-    fp_optimizer = torch.optim.SGD([{'params':fp_parameters}], lr=args.lr, momentum=args.momentum, weight_decay=1e-4)
-    # optimizer = torch.optim.SGD(fp_parameters, lr=args.lr, momentum=0.9)
-    # lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(fp_optimizer, T_max = args.epochs, eta_min = 1e-3, last_epoch=-1)
+            params_with_decay.append(param)
+    fp_optimizer = torch.optim.SGD([
+        {'params': params_with_decay, 'weight_decay': 1e-4},  # Apply weight decay to specific parameters
+        {'params': params_without_decay}  # No weight decay for other parameters
+    ], lr=args.lr, momentum=args.momentum)
+
     lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(fp_optimizer, milestones=[90, 180], gamma=0.1)
 
     for epoch in range(args.start_epoch, args.epochs):
