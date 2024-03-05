@@ -224,11 +224,13 @@ def main():
     #     if '.M' in name:
     #         # print(f'name: {name}')
     #         params_without_decay.append(param)
-    #     else:
-    #         params_with_decay.append(param)
+    
+    # id_params_wo_decay = set([id(param) for param in params_without_decay])
+    # params_with_decay = [param for param in model.parameters() if id(param) not in id_params_wo_decay]
+
     # fp_optimizer = torch.optim.SGD([
     #     {'params': params_with_decay, 'weight_decay': 1e-4},  # Apply weight decay to specific parameters
-    #     {'params': params_without_decay, 'weight_decay': 1e-4}  # No weight decay for other parameters
+    #     {'params': params_without_decay}  # No weight decay for other parameters
     # ], lr=args.lr, momentum=args.momentum)
 
     lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(fp_optimizer, milestones=[90, 180], gamma=0.1)
@@ -358,7 +360,7 @@ def forward(data_loader, model, criterion, epoch=0, training=True, fp_optimizer=
 
         L = 10 * args.K
         if not training:
-            model.eval()
+            # model.eval()
             with torch.no_grad():
                 output = model(inputs)
                 loss = criterion(output, target)
