@@ -91,7 +91,7 @@ parser.add_argument('--momentum', type=float, default=0.9, metavar='M',
                     help='BayesBiNN momentum (default: 0.9)')
 parser.add_argument('--wd', type=float, default=1e-4, metavar='weight decay',
                         help='weight decay (default: 1e-4)')
-parser.add_argument('--L', type=float, default=10, metavar='sampling frequency', 
+parser.add_argument('-L', type=float, default=10, metavar='sampling frequency', 
                     help='sample 2K+L*K')
 
 
@@ -365,7 +365,7 @@ def forward(data_loader, model, criterion, epoch=0, training=True, fp_optimizer=
             inputs = inputs.cuda()
             target = target.cuda()
 
-        L = args.L * args.K
+        L = int(args.L * args.K)
         if not training:
             # model.eval()
             with torch.no_grad():
@@ -384,7 +384,7 @@ def forward(data_loader, model, criterion, epoch=0, training=True, fp_optimizer=
                     params = model.named_parameters()
                     for name, param in params:
                         # print(f'name: {name}, param.shape: {param.shape}')
-                        if 'sample' in name:
+                        if 'sample' in name and 'downsample' not in name:
                             param.zero_()
                             param[0][j] = 1
                     output = model(inputs)
@@ -395,7 +395,7 @@ def forward(data_loader, model, criterion, epoch=0, training=True, fp_optimizer=
                     params = model.named_parameters()
                     for name, param in params:
                         # print(f'name: {name}, param.shape: {param.shape}')
-                        if 'sample' in name:
+                        if 'sample' in name and 'downsample' not in name:
                             param.zero_()
                             param[0][j] = -1
                     output = model(inputs)
