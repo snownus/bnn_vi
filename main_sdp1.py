@@ -415,7 +415,7 @@ def forward(data_loader, model, criterion, epoch=0, training=True, fp_optimizer=
                 params = model.named_parameters()
                 for name, param in params:
                     # print(f'name: {name}, param.shape: {param.shape}')
-                    if 'sample' in name:
+                    if 'sample' in name and 'downsample' not in name:
                         param.zero_()
                         param[0][j] = 1
                 output = model(inputs)
