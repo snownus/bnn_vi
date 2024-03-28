@@ -24,7 +24,7 @@ def init_model(model):
 
 class BinaryNet(nn.Module):
 
-    def __init__(self, K, scale, variance, input_size=32, num_classes=100):
+    def __init__(self, K, scale, input_size=32, num_classes=100):
         super(BinaryNet, self).__init__()
         self.infl_ratio=1
         self.input_size = input_size
@@ -105,7 +105,7 @@ def vgg_cifar100_sdp(**kwargs):
     num_classes = kwargs.get( 'num_classes', 100)
     K = kwargs.get( 'K', 2)
     scale = kwargs.get('scale', 100)
-    return BinaryNet(K, scale, scale, input_size, num_classes)
+    return BinaryNet(K, scale, input_size, num_classes)
 
 def vgg_tiny_imagenet_sdp(**kwargs):
     input_size = kwargs.get('input_size', 64)

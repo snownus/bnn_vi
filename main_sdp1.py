@@ -89,14 +89,19 @@ parser.add_argument('--lr', type=float, default=0.5, metavar='LR',
                         help='learning rate (default: 3e-4)')
 parser.add_argument('--momentum', type=float, default=0.9, metavar='M',
                     help='BayesBiNN momentum (default: 0.9)')
+parser.add_argument('--wd', type=float, default=1e-4, metavar='weight decay',
+                        help='weight decay (default: 1e-4)')
+parser.add_argument('--L', type=float, default=10, metavar='sampling frequency', 
+                    help='sample 2K+L*K')
 
 
 writer = SummaryWriter()
-loss_idx_value = 0
+train_loss_idx_value = 0
+val_loss_idx_value = 0
 
 
 def main():
-    global args, best_prec1, writer, loss_idx_value
+    global args, best_prec1, writer, train_loss_idx_value, val_loss_idx_value
     args = parser.parse_args()
     best_prec1 = 0
 
@@ -215,7 +220,7 @@ def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
 
-    fp_optimizer = torch.optim.SGD([{'params':model.parameters()}], lr=args.lr, momentum=args.momentum, weight_decay=1e-4)
+    fp_optimizer = torch.optim.SGD([{'params':model.parameters()}], lr=args.lr, momentum=args.momentum, weight_decay=args.wd)
 
     # Group parameters based on names. ISSUES: maybe some parameters not in model.named_parameters()
     # params_with_decay = []
@@ -233,7 +238,9 @@ def main():
     #     {'params': params_without_decay}  # No weight decay for other parameters
     # ], lr=args.lr, momentum=args.momentum)
 
-    lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(fp_optimizer, milestones=[90, 180], gamma=0.1)
+    # lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(fp_optimizer, milestones=[90, 180], gamma=0.1)
+
+    lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(fp_optimizer, milestones=[60, 90], gamma=0.1)
 
     for epoch in range(args.start_epoch, args.epochs):
         # fp_optimizer = torch.optim.Adam(fp_parameters, lr=0.001)
@@ -338,7 +345,7 @@ def sample_uniform_int(a, b):
 
 
 def forward(data_loader, model, criterion, epoch=0, training=True, fp_optimizer=None):
-    global writer, loss_idx_value
+    global writer, train_loss_idx_value, val_loss_idx_value
     batch_time = AverageMeter()
     data_time = AverageMeter()
     losses = AverageMeter()
@@ -358,7 +365,7 @@ def forward(data_loader, model, criterion, epoch=0, training=True, fp_optimizer=
             inputs = inputs.cuda()
             target = target.cuda()
 
-        L = 10 * args.K
+        L = args.L * args.K
         if not training:
             # model.eval()
             with torch.no_grad():
@@ -419,7 +426,7 @@ def forward(data_loader, model, criterion, epoch=0, training=True, fp_optimizer=
                 params = model.named_parameters()
                 for name, param in params:
                     # print(f'name: {name}, param.shape: {param.shape}')
-                    if 'sample' in name:
+                    if 'sample' in name and 'downsample' not in name:
                         param.zero_()
                         param[0][j] = -1
                 output = model(inputs)
@@ -433,7 +440,7 @@ def forward(data_loader, model, criterion, epoch=0, training=True, fp_optimizer=
 
         params = model.named_parameters()
         for name, param in params:
-            if 'sample' in name:
+            if 'sample' in name and 'downsample' not in name:
                 param.zero_()
 
         if type(total_output) is list:
@@ -461,8 +468,12 @@ def forward(data_loader, model, criterion, epoch=0, training=True, fp_optimizer=
                              batch_time=batch_time,
                              data_time=data_time, loss=losses, top1=top1, top5=top5))
         
-        writer.add_scalar("Loss", total_loss, loss_idx_value)
-        loss_idx_value += 1
+        if not training:
+            writer.add_scalar("Validation Loss", total_loss, val_loss_idx_value)
+            val_loss_idx_value += 1
+        else:
+            writer.add_scalar("Training Loss", total_loss, train_loss_idx_value)
+            train_loss_idx_value += 1
 
     if not training:
         weight_histograms(writer, epoch, model, args.scale)
