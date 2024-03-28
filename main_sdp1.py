@@ -238,9 +238,9 @@ def main():
     #     {'params': params_without_decay}  # No weight decay for other parameters
     # ], lr=args.lr, momentum=args.momentum)
 
-    # lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(fp_optimizer, milestones=[90, 180], gamma=0.1)
+    lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(fp_optimizer, milestones=[90, 180], gamma=0.1)
 
-    lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(fp_optimizer, milestones=[60, 90], gamma=0.1)
+    # lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(fp_optimizer, milestones=[60, 90], gamma=0.1)
 
     for epoch in range(args.start_epoch, args.epochs):
         # fp_optimizer = torch.optim.Adam(fp_parameters, lr=0.001)
