@@ -28,20 +28,14 @@ class BinaryActivation(nn.Module):
         out2 = out1 * mask2.type(torch.float32) + (-x*x + 2*x) * (1-mask2.type(torch.float32))
         out3 = out2 * mask3.type(torch.float32) + 1 * (1- mask3.type(torch.float32))
         out = out_forward.detach() - out3.detach() + out3
-        '''
-        mask1 = x < -1
-        mask2 = x > 1
-        out1 = (-1) * mask1.type(torch.float32) + (x) * (1-mask1.type(torch.float32))
-        out2 = (1) * mask2.type(torch.float32) + (x) * (1-mask2.type(torch.float32))
-        out = out_forward.detach() - out2.detach() + out2
-        '''
 
         return out
 
 
 class BinarizeConv2dSDP(nn.Module):
 
-    def __init__(self, K, scale, in_chn, out_chn, dropout=0, kernel_size=3, stride=1, padding=1, bias=False, linear=False):
+    def __init__(self, K, scale, in_chn, out_chn, dropout=0, kernel_size=3, 
+                 stride=1, padding=1, bias=False, linear=False, binarize_a=True):
         super(BinarizeConv2dSDP, self).__init__()
         self.alpha = nn.Parameter(torch.rand(out_chn, 1, 1), requires_grad=True)
         self.stride = stride
@@ -66,6 +60,7 @@ class BinarizeConv2dSDP(nn.Module):
         self.linear = linear
         self.in_chn = in_chn
         self.out_chn = out_chn
+        self.binarize_a = binarize_a
         
         # get the i^th column of Z.
         self.sample = nn.Parameter(torch.zeros((1, K)), requires_grad=False)
@@ -94,7 +89,10 @@ class BinarizeConv2dSDP(nn.Module):
         a = input
         if self.linear:
             a = a[:, :, None, None]
-        ba = BinaryQuantize_a().apply(a)
+        if self.binarize_a:
+            ba = BinaryQuantize_a().apply(a)
+        else:
+            ba = a
         output = F.conv2d(ba, bw, stride=self.stride, padding=self.padding, bias=None)
         #* scaling factor
         output = output * self.alpha
