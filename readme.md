@@ -1,9 +1,1 @@
-Feb 13/14:
-    testing tensorboard Loss and hist for Z and M.
-    testing different initialization for Z and M. 
-
-
-Feb 15:
-    different servers
-    multi-gpus
-    sampling methods 
+python main_sdp1.py --model vgg_cifar10_sdp --save vgg_cifar10_SDP --dataset cifar10 --binarization det --input_size 32 --epochs 200 -b 256 -j 20 -K 4 -scale 1000 --lr 0.5 --wd 5e-5 -L 20 --gpus 0
