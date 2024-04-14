@@ -2,11 +2,11 @@ import torch
 import torch.nn as nn
 import torchvision.transforms as transforms
 from torch.autograd import Function
-# from .binarized_modules import  BinarizeLinear,BinarizeConv2d
 import math
 
-# from .recu_modules import BinarizeConv2d
-from .sdp_wo_entropy import BinarizeConv2dSDP
+# from .sdp_wo_entropy import BinarizeConv2dSDP
+
+from .sdp_wo_z import BinarizeConv2dSDP
 
 
 def init_model(model):

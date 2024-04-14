@@ -3,7 +3,10 @@ import torchvision.transforms as transforms
 import math
 from .binarized_modules import  BinarizeLinear,BinarizeConv2d
 
-from .sdp_wo_entropy import BinarizeConv2dSDP
+# from .sdp_wo_entropy import BinarizeConv2dSDP
+
+from .sdp_wo_z import BinarizeConv2dSDP
+
 
 __all__ = ['resnet_binary_sdp']
 
@@ -166,10 +169,10 @@ class ResNet_imagenet(ResNet):
         self.bn1 = nn.BatchNorm2d(64)
         self.tanh = nn.Hardtanh(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
-        self.layer1 = self._make_layer(block, 64, layers[0])
-        self.layer2 = self._make_layer(block, 128, layers[1], stride=2)
-        self.layer3 = self._make_layer(block, 256, layers[2], stride=2)
-        self.layer4 = self._make_layer(block, 512, layers[3], stride=2)
+        self.layer1 = self._make_layer(K, block, 64, layers[0])
+        self.layer2 = self._make_layer(K, block, 128, layers[1], stride=2)
+        self.layer3 = self._make_layer(K, block, 256, layers[2], stride=2)
+        self.layer4 = self._make_layer(K, block, 512, layers[3], stride=2)
         self.avgpool = nn.AvgPool2d(7)
         self.fc = BinarizeLinear(512 * block.expansion, num_classes)
 
@@ -225,7 +228,7 @@ class ResNet_cifar(ResNet):
 
 class ResNet_tiny_imagenet(ResNet):
 
-    def __init__(self, num_classes=10,
+    def __init__(self, K=4, scale=1000, num_classes=10,
                  block=BasicBlock, depth=18):
         super(ResNet_tiny_imagenet, self).__init__()
         self.inflate = 5
@@ -237,9 +240,9 @@ class ResNet_tiny_imagenet(ResNet):
         self.bn1 = nn.BatchNorm2d(16*self.inflate)
         self.tanh1 = nn.Hardtanh(inplace=True)
         self.tanh2 = nn.Hardtanh(inplace=True)
-        self.layer1 = self._make_layer(block, 16*self.inflate, n)
-        self.layer2 = self._make_layer(block, 32*self.inflate, n, stride=2)
-        self.layer3 = self._make_layer(block, 64*self.inflate, n, stride=2,do_bntan=False)
+        self.layer1 = self._make_layer(K, scale, block, 16*self.inflate, n)
+        self.layer2 = self._make_layer(K, scale, block, 32*self.inflate, n, stride=2)
+        self.layer3 = self._make_layer(K, scale, block, 64*self.inflate, n, stride=2,do_bntan=False)
         self.layer4 = lambda x: x
         self.avgpool = nn.AvgPool2d(8)
         self.bn2 = nn.BatchNorm1d(4*64*self.inflate)
