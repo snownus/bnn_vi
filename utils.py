@@ -13,7 +13,7 @@ from optimizers import SGDAT, Bop,Bop2ndOrder, Bop2ndOrderProb, BopExp, BopExp2,
 def setup_logging(log_file='log.txt'):
     """Setup logging configuration
     """
-    logging.basicConfig(level=logging.DEBUG,
+    logging.basicConfig(level=logging.INFO,
                         format="%(asctime)s - %(levelname)s - %(message)s",
                         datefmt="%Y-%m-%d %H:%M:%S",
                         filename=log_file,

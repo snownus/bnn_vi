@@ -28,6 +28,13 @@ import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 # import torchvision.models as models
 import models
+import logging
+
+from models import BinarizeConv2dSDP
+import copy
+
+from torch.utils.tensorboard import SummaryWriter
+from utils import setup_logging
 
 def fast_collate(batch, memory_format):
     """Based on fast_collate from the APEX example
@@ -102,6 +109,10 @@ def parse():
     parser.add_argument('-K', default=2, type=int, help='K value')
     parser.add_argument('-scale', default=1, type=float, help='variance scale hyper-parameter')
     parser.add_argument('-L', type=float, default=10, metavar='sampling frequency', help='sample 2K+L*K')
+    parser.add_argument('--results_dir', metavar='RESULTS_DIR', default='./results',
+                    help='results dir')
+    parser.add_argument('-save', metavar='SAVE', default='',
+                        help='saved folder')
 
     args = parser.parse_args()
     return args
@@ -173,16 +184,29 @@ def sample_uniform_int(a, b):
     
     return sampled_number.item()
 
+
+writer = SummaryWriter()
+train_loss_idx_value = 0
+val_loss_idx_value = 0
+
 def main():
-    global best_prec1, args
+    global best_prec1, args, writer, train_loss_idx_value, val_loss_idx_value
     best_prec1 = 0
     args = parse()
+
+    save_path = os.path.join(args.results_dir, args.save)
+    if not os.path.exists(save_path):
+        os.makedirs(save_path)
+    setup_logging(os.path.join(save_path, 'log.txt'))
+
+    logging.info("saving to %s", save_path)
+    logging.info(f"run arguments: {args}")
 
     if not len(args.data):
         raise Exception("error: No data set provided")
 
     if args.test:
-        print("Test mode - only 10 iterations")
+        logging.info("Test mode - only 10 iterations")
 
     args.distributed = False
     if 'WORLD_SIZE' in os.environ:
@@ -193,10 +217,9 @@ def main():
         args.local_rank = 0
 
     if args.local_rank == 0:
-        print("fp16_mode = {}".format(args.fp16_mode))
-        print("loss_scale = {}".format(args.loss_scale), type(args.loss_scale))
-
-        print("\nCUDNN VERSION: {}\n".format(torch.backends.cudnn.version()))
+        logging.info("fp16_mode = {}".format(args.fp16_mode))
+        logging.info("loss_scale = {}".format(args.loss_scale))
+        logging.info("\nCUDNN VERSION: {}\n".format(torch.backends.cudnn.version()))
 
     cudnn.benchmark = True
     best_prec1 = 0
@@ -227,7 +250,7 @@ def main():
     #     print("=> creating model '{}'".format(args.arch))
     #     model = models.__dict__[args.arch]()
     if args.local_rank == 0:
-        print(f"creating model: {args.arch}")
+        logging.info(f"creating model: {args.arch}")
     model = models.__dict__[args.arch]
     model_config = {'K': args.K, 'scale': args.scale}
     model = model(**model_config)
@@ -262,17 +285,20 @@ def main():
         # Use a local scope to avoid dangling references
         def resume():
             if os.path.isfile(args.resume):
-                print("=> loading checkpoint '{}'".format(args.resume))
+                logging.info("=> loading checkpoint '{}'".format(args.resume))
                 checkpoint = torch.load(args.resume, map_location = lambda storage, loc: storage.cuda(args.gpu))
                 args.start_epoch = checkpoint['epoch']
+                val_loss_idx_value, train_loss_idx_value = checkpoint['epoch'], checkpoint['epoch']
                 global best_prec1
                 best_prec1 = checkpoint['best_prec1']
                 model.load_state_dict(checkpoint['state_dict'])
                 optimizer.load_state_dict(checkpoint['optimizer'])
-                print("=> loaded checkpoint '{}' (epoch {})"
-                      .format(args.resume, checkpoint['epoch']))
+                if args.local_rank == 0:
+                    logging.info("=> loaded checkpoint '{}' (epoch {})"
+                        .format(args.resume, checkpoint['epoch']))
             else:
-                print("=> no checkpoint found at '{}'".format(args.resume))
+                if args.local_rank == 0:
+                    logging.info("=> no checkpoint found at '{}'".format(args.resume))
         resume()
 
     # Data loading code
@@ -368,6 +394,10 @@ def main():
                                        enabled=args.fp16_mode)
     total_time = AverageMeter()
     for epoch in range(args.start_epoch, args.epochs):
+        # weight_histograms(writer, epoch, model)
+        if args.local_rank == 0:
+            writer.add_scalar("LR", optimizer.param_groups[0]['lr'], epoch)
+
         # train for one epoch
         avg_train_time = train(train_loader, model, criterion, scaler, optimizer, epoch)
         total_time.update(avg_train_time)
@@ -376,6 +406,8 @@ def main():
 
         # evaluate on validation set
         [prec1, prec5] = validate(val_loader, model, criterion)
+        if args.local_rank == 0:
+            weight_histograms(writer, epoch, model, args.scale)
 
         # remember best prec@1 and save checkpoint
         if args.local_rank == 0:
@@ -389,12 +421,13 @@ def main():
                 'optimizer' : optimizer.state_dict(),
             }, is_best)
             if epoch == args.epochs - 1:
-                print('##Top-1 {0}\n'
+                logging.info('##Top-1 {0}\n'
                       '##Top-5 {1}\n'
                       '##Perf  {2}'.format(
                       prec1,
                       prec5,
                       args.total_batch_size / total_time.avg))
+            writer.add_scalar("best_prec1", best_prec1, epoch)
 
 class data_prefetcher():
     """Based on prefetcher from the APEX example
@@ -438,7 +471,51 @@ class data_prefetcher():
             raise StopIteration
         return input, target
 
+
+
+def weight_histograms_W(writer, step, weights, layer_number):
+  weights_shape = weights.shape
+  num_kernels = weights_shape[0]
+  for k in range(num_kernels):
+    flattened_weights = weights[k].flatten()
+    tag = f"layer_{layer_number}/M_{k}"
+    writer.add_histogram(tag, flattened_weights, global_step=step, bins='tensorflow')
+
+
+def weight_histograms_Z(writer, step, Z, layer_number):
+    Z_shape = Z.shape
+    num_kernels = Z_shape[0]
+    for k in range(num_kernels):
+        flattened_Z = Z[k].flatten()
+        tag = f"layer_{layer_number}/Z_{k}"
+        writer.add_histogram(tag, flattened_Z, global_step=step, bins='tensorflow')
+
+
+def weight_histograms(writer, step, model, scale):
+    print("Visualizing model weights...")
+    layer_number = 0
+    for module in model.modules():
+        if isinstance(module, BinarizeConv2dSDP):
+            m = copy.deepcopy(module.M)
+            z = copy.deepcopy(module.Z)
+            m_shape, z_shape = m.shape, z.shape
+            m = m.view(-1)
+            z = z.view(args.K, m.shape[0])
+            # visualize m and z after normalization.
+            A = m*m + torch.sum(z.T**2, dim=1)/scale
+            m.data = m.data / torch.sqrt(A)
+            z.data = z.data / torch.sqrt(A)
+
+            m = m.view(m_shape)
+            z = z.view(z_shape)
+
+            weight_histograms_W(writer, step, m, layer_number)
+            weight_histograms_Z(writer, step, z, layer_number)
+            layer_number += 1
+
+
 def train(train_loader, model, criterion, scaler, optimizer, epoch):
+    global writer, train_loss_idx_value
     batch_time = AverageMeter()
     losses = AverageMeter()
     top1 = AverageMeter()
@@ -464,7 +541,7 @@ def train(train_loader, model, criterion, scaler, optimizer, epoch):
             train_loader_len = int(math.ceil(data_iterator._size / args.batch_size))
 
         if args.prof >= 0 and i == args.prof:
-            print("Profiling begun at iteration {}".format(i))
+            logging.info("Profiling begun at iteration {}".format(i))
             torch.cuda.cudart().cudaProfilerStart()
 
         if args.prof >= 0: torch.cuda.nvtx.range_push("Body of iteration {}".format(i))
@@ -547,7 +624,7 @@ def train(train_loader, model, criterion, scaler, optimizer, epoch):
             end = time.time()
 
             if args.local_rank == 0:
-                print('Epoch: [{0}][{1}/{2}]\t'
+                logging.info('Epoch: [{0}][{1}/{2}]\t'
                       'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
                       'Speed {3:.3f} ({4:.3f})\t'
                       'Loss {loss.val:.10f} ({loss.avg:.4f})\t'
@@ -563,13 +640,20 @@ def train(train_loader, model, criterion, scaler, optimizer, epoch):
         if args.prof >= 0: torch.cuda.nvtx.range_pop()
 
         if args.prof >= 0 and i == args.prof + 10:
-            print("Profiling ended at iteration {}".format(i))
+            logging.info("Profiling ended at iteration {}".format(i))
             torch.cuda.cudart().cudaProfilerStop()
             quit()
 
+    if args.local_rank == 0:
+        logging.info(' * Prec@1 {top1.avg:.3f} Prec@5 {top5.avg:.3f} Losses {losses.avg:.3f}'
+            .format(top1=top1, top5=top5, losses=losses))
+        writer.add_scalar("Train Loss", losses.avg, train_loss_idx_value)
+        train_loss_idx_value += 1
+        
     return batch_time.avg
 
 def validate(val_loader, model, criterion):
+    global writer, val_loss_idx_value
     batch_time = AverageMeter()
     losses = AverageMeter()
     top1 = AverageMeter()
@@ -657,7 +741,7 @@ def validate(val_loader, model, criterion):
 
         # TODO:  Change timings to mirror train().
         if args.local_rank == 0 and i % args.print_freq == 0:
-            print('Test: [{0}/{1}]\t'
+            logging.info('Test: [{0}/{1}]\t'
                   'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
                   'Speed {2:.3f} ({3:.3f})\t'
                   'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
@@ -670,16 +754,21 @@ def validate(val_loader, model, criterion):
                    top1=top1, top5=top5))
 
     if args.local_rank == 0:
-        print(' * Prec@1 {top1.avg:.3f} Prec@5 {top5.avg:.3f}'
-            .format(top1=top1, top5=top5))
-
+        logging.info(' * Prec@1 {top1.avg:.3f} Prec@5 {top5.avg:.3f} Losses {losses.avg:.3f}'
+            .format(top1=top1, top5=top5, losses=losses))
+        writer.add_scalar("Validation Loss", losses.avg, val_loss_idx_value)
+        val_loss_idx_value += 1
+        
     return [top1.avg, top5.avg]
 
 
-def save_checkpoint(state, is_best, filename='checkpoint.pth.tar'):
-    torch.save(state, filename)
+def save_checkpoint(state, is_best):
+    save_path = os.path.join(args.results_dir, args.save)
+    model_path = os.path.join(save_path, 'checkpoint.pth.tar')
+    best_model_path = os.path.join(save_path, 'model_best.pth.tar')
+    torch.save(state, model_path)
     if is_best:
-        shutil.copyfile(filename, 'model_best.pth.tar')
+        shutil.copyfile(model_path, best_model_path)
 
 
 class AverageMeter(object):
@@ -702,9 +791,9 @@ class AverageMeter(object):
 
 def adjust_learning_rate(optimizer, epoch, step, len_epoch):
     """LR schedule that should yield 76% converged accuracy with batch size 256"""
-    factor = epoch // 30
+    factor = epoch // 60
 
-    if epoch >= 80:
+    if epoch >= 140:
         factor = factor + 1
 
     lr = args.lr*(0.1**factor)
