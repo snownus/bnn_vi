@@ -376,7 +376,7 @@ def forward(data_loader, model, criterion, epoch=0, training=True, fp_optimizer=
             inputs = inputs.cuda()
             target = target.cuda()
 
-        L = int(args.L * args.K)
+        L = int(args.L)
         if not training:
             # model.eval()
             with torch.no_grad():
