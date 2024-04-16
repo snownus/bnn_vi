@@ -3,9 +3,9 @@ import torchvision.transforms as transforms
 import math
 from .binarized_modules import  BinarizeLinear,BinarizeConv2d
 
-# from .sdp_wo_entropy import BinarizeConv2dSDP
+from .sdp_wo_entropy import BinarizeConv2dSDP
 
-from .sdp_wo_z import BinarizeConv2dSDP
+# from .sdp_wo_z import BinarizeConv2dSDP
 
 
 __all__ = ['resnet_binary_sdp']
