@@ -112,7 +112,7 @@ def main():
     torch.manual_seed(seed_value)     # 为CPU设置随机种子
     torch.cuda.manual_seed(seed_value)      # 为当前GPU设置随机种子（只用一块GPU）
     torch.cuda.manual_seed_all(seed_value)   # 为所有GPU设置随机种子（多块GPU）
-    
+
     best_prec1 = 0
 
     if args.evaluate:
@@ -144,6 +144,9 @@ def main():
 
     model = model(**model_config)
     logging.info("created model with configuration: %s", model_config)
+    model= nn.DataParallel(model)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model.to(device)
 
     # optionally resume from a checkpoint
     if args.evaluate:
@@ -226,10 +229,6 @@ def main():
     logging.info("number of binary parameters: %d", binary_num_parameters)
     logging.info("number of full precision parameters: %d", fp_num_parameters)
 
-    model= nn.DataParallel(model)
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model.to(device)
-
     fp_optimizer = torch.optim.SGD([{'params':model.parameters()}], lr=args.lr, momentum=args.momentum, weight_decay=args.wd)
 
     # Group parameters based on names. ISSUES: maybe some parameters not in model.named_parameters()
@@ -251,6 +250,8 @@ def main():
     lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(fp_optimizer, milestones=[90, 180], gamma=0.1)
 
     # lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(fp_optimizer, milestones=[60, 90], gamma=0.1)
+    for i in range(args.start_epoch):
+        lr_scheduler.step()
 
     for epoch in range(args.start_epoch, args.epochs):
         # fp_optimizer = torch.optim.Adam(fp_parameters, lr=0.001)
@@ -438,8 +439,8 @@ def forward(data_loader, model, criterion, epoch=0, training=True, fp_optimizer=
             writer.add_scalar("Training Loss", total_loss, train_loss_idx_value)
             train_loss_idx_value += 1
 
-    if not training:
-        weight_histograms(writer, epoch, model, args.scale)
+    # if not training:
+    #     weight_histograms(writer, epoch, model, args.scale)
     return losses.avg, top1.avg, top5.avg
 
 
