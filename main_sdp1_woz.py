@@ -122,7 +122,7 @@ def main():
     results = ResultsLog(results_file % 'csv', results_file % 'html')
 
     logging.info("saving to %s", save_path)
-    logging.debug("run arguments: %s", args)
+    logging.info("run arguments: %s", args)
 
     os.environ['CUDA_VISIBLE_DEVICES'] = args.gpus 
     cudnn.benchmark = True
