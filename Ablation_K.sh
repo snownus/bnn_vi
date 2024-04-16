@@ -7,6 +7,9 @@ K=6
 S=100
 L=40
 
+wd=5e-5
+lr=0.5
+
 # Define the seed values
 seeds=(2020 2024 1314 512 2333)
 
@@ -21,7 +24,7 @@ do
   echo "Running with seed=$seed and GPU_id=$GPU_id"
   nohup python main_sdp1_wo_gaussian_qudrature.py --model vgg_cifar100_sdp \
   --save vgg_cifar100_seed=${seed}_wo_GQ_K=${K}_S=${S}_L=${L} \
-  --dataset cifar100 --binarization  det \
+  --dataset cifar100 --binarization  det --wd ${wd} --lr ${lr} \
   --input_size 32 --epochs 200 -b 256 -j 10 -K $K -L $L --seed $seed -scale $S --gpus $GPU_id \
   > /dev/null 2>&1 &
   # Replace the following line with the actual command you want to execute
