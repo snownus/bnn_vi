@@ -4,9 +4,9 @@ import torchvision.transforms as transforms
 from torch.autograd import Function
 import math
 
-# from .sdp_wo_entropy import BinarizeConv2dSDP
+from .sdp_wo_entropy import BinarizeConv2dSDP
 
-from .sdp_wo_z import BinarizeConv2dSDP
+# from .sdp_wo_z import BinarizeConv2dSDP
 
 
 def init_model(model):
