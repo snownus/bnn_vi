@@ -27,7 +27,7 @@ do
   nohup python main_sdp1_wo_gaussian_qudrature.py --model resnet_binary_sdp \
   --save resnet_tiny_imagenet_seed=${seed}_benchmark_K=${K}_S=${S}_L=${L} \
   --dataset tiny_imagenet --binarization  det --wd ${wd} --lr ${lr} \
-  --input_size 32 --epochs 200 -b 256 -j 10 -K $K -L $L --seed $seed -scale $S --gpus $GPU_id \
+  --input_size 64 --epochs 200 -b 256 -j 10 -K $K -L $L --seed $seed -scale $S --gpus $GPU_id \
   > /dev/null 2>&1 &
   # Replace the following line with the actual command you want to execute
   # command --seed $seed --gpu $GPU_id
