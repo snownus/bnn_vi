@@ -25,18 +25,6 @@ import copy
 from models import BinarizeConv2dSDP
 from torch.utils.tensorboard import SummaryWriter
 
-seed_value = 2020   # 设定随机数种子
-
-np.random.seed(seed_value)
-random.seed(seed_value)
-os.environ['PYTHONHASHSEED'] = str(seed_value)  # 为了禁止hash随机化，使得实验可复现。
-
-torch.manual_seed(seed_value)     # 为CPU设置随机种子
-torch.cuda.manual_seed(seed_value)      # 为当前GPU设置随机种子（只用一块GPU）
-torch.cuda.manual_seed_all(seed_value)   # 为所有GPU设置随机种子（多块GPU）
-
-torch.backends.cudnn.deterministic = True
-
 model_names = sorted(name for name in models.__dict__
                      if name.islower() and not name.startswith("__")
                      and callable(models.__dict__[name]))
@@ -93,6 +81,7 @@ parser.add_argument('--wd', type=float, default=1e-4, metavar='weight decay',
                         help='weight decay (default: 1e-4)')
 parser.add_argument('-L', type=float, default=10, metavar='sampling frequency', 
                     help='sample 2K+L*K')
+parser.add_argument('--seed', type=int, default=2020, metavar='sampling frequency', help='seed value')
 
 
 writer = SummaryWriter()
@@ -104,6 +93,17 @@ def main():
     global args, best_prec1, writer, train_loss_idx_value, val_loss_idx_value
     args = parser.parse_args()
     best_prec1 = 0
+
+    seed_value = args.seed
+    np.random.seed(seed_value)
+    random.seed(seed_value)
+    os.environ['PYTHONHASHSEED'] = str(seed_value)  # 为了禁止hash随机化，使得实验可复现。
+
+    torch.manual_seed(seed_value)     # 为CPU设置随机种子
+    torch.cuda.manual_seed(seed_value)      # 为当前GPU设置随机种子（只用一块GPU）
+    torch.cuda.manual_seed_all(seed_value)   # 为所有GPU设置随机种子（多块GPU）
+
+    torch.backends.cudnn.deterministic = True
 
     if args.evaluate:
         args.results_dir = '/tmp'
