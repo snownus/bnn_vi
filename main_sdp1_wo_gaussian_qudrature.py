@@ -74,6 +74,8 @@ parser.add_argument('--print-freq', '-p', default=10, type=int,
                     metavar='N', help='print frequency (default: 10)')
 parser.add_argument('--resume', default='', type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
+parser.add_argument('--pretrained', default='', type=str, metavar='PATH',
+                    help='path to pretrained checkpoint (default: none)')
 parser.add_argument('-e', '--evaluate', type=str, metavar='FILE',
                     help='evaluate model FILE on validation set')
 parser.add_argument('--fp_regime', default="{0: {'optimizer': 'Adam','lr':1e-3}}", type=str, metavar='OPT',
@@ -94,7 +96,7 @@ parser.add_argument('--wd', type=float, default=1e-4, metavar='weight decay',
 parser.add_argument('-L', type=float, default=10, metavar='sampling frequency', 
                     help='sample 2K+L*K')
 parser.add_argument('--seed', type=int, default=2020, metavar='sampling frequency', help='seed value')
-
+parser.add_argument('--milestones', metavar='N', type=int, nargs='+', help='milestones')
 
 writer = SummaryWriter()
 train_loss_idx_value = 0
@@ -172,6 +174,14 @@ def main():
                          checkpoint_file, checkpoint['epoch'])
         else:
             logging.error("no checkpoint found at '%s'", args.resume)
+    elif args.pretrained:
+        checkpoint_file = args.pretrained
+        if os.path.isfile(checkpoint_file):
+            logging.info("loading checkpoint '%s'", args.pretrained)
+            checkpoint = torch.load(checkpoint_file)
+            model.load_state_dict(checkpoint['state_dict'], strict=False)
+            logging.info("loaded checkpoint '%s' (epoch %s)",
+                         checkpoint_file, checkpoint['epoch'])
 
     # Data loading code
     default_transform = {
@@ -247,7 +257,7 @@ def main():
     #     {'params': params_without_decay}  # No weight decay for other parameters
     # ], lr=args.lr, momentum=args.momentum)
 
-    lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(fp_optimizer, milestones=[90, 180], gamma=0.1)
+    lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(fp_optimizer, milestones=args.milestones, gamma=0.1)
 
     # lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(fp_optimizer, milestones=[60, 90], gamma=0.1)
     for i in range(args.start_epoch):
@@ -268,6 +278,7 @@ def main():
 
         # weight_histograms(writer, epoch, model)
         writer.add_scalar("LR", fp_optimizer.param_groups[0]['lr'], epoch)
+        logging.info(f"lr:{fp_optimizer.param_groups[0]['lr']} at epoch:{epoch}")
 
         # remember best prec@1 and save checkpoint
         is_best = val_prec1 > best_prec1
