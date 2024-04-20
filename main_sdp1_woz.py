@@ -88,7 +88,7 @@ parser.add_argument('--wd', type=float, default=1e-4, metavar='weight decay',
 parser.add_argument('-L', type=float, default=10, metavar='sampling frequency', 
                     help='sample 2K+L*K')
 parser.add_argument('--seed', type=int, default=2020, metavar='sampling frequency', help='seed value')
-
+parser.add_argument('--milestones', metavar='N', type=int, nargs='+', help='milestones')
 
 writer = SummaryWriter()
 train_loss_idx_value = 0
@@ -241,7 +241,7 @@ def main():
     #     {'params': params_without_decay}  # No weight decay for other parameters
     # ], lr=args.lr, momentum=args.momentum)
 
-    lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(fp_optimizer, milestones=[90, 180], gamma=0.1)
+    lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(fp_optimizer, milestones=args.milestones, gamma=0.1)
 
     # lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(fp_optimizer, milestones=[60, 90], gamma=0.1)
     for _ in range(args.start_epoch):
