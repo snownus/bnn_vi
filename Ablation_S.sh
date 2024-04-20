@@ -4,7 +4,7 @@
 # K_values=(2 4 6 8 10)
 
 S=1
-K=8
+K=4
 L=40
 
 wd=5e-5
@@ -23,9 +23,10 @@ paste <(printf "%s\n" "${seeds[@]}") <(printf "%s\n" "${GPU_ids[@]}") | while IF
 do
   echo "Running with seed=$seed and GPU_id=$GPU_id"
   nohup python main_sdp1_wo_gaussian_qudrature.py --model vgg_cifar100_sdp \
-  --save vgg_cifar100_seed=${seed}_abaltion_S_K=${K}_S=${S}_L=${L} \
+  --save vgg_cifar100_seed=${seed}_abaltion_S_K=${K}_S=${S}_L=${L}_milestones=60_120_180 \
   --dataset cifar100 --binarization  det --wd ${wd} --lr ${lr} \
   --input_size 32 --epochs 200 -b 256 -j 10 -K $K -L $L --seed $seed -scale $S --gpus $GPU_id \
+  --milestones 60 120 180 \
   > /dev/null 2>&1 &
   # Replace the following line with the actual command you want to execute
   # command --seed $seed --gpu $GPU_id
