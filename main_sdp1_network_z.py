@@ -393,7 +393,7 @@ def forward(data_loader, model, criterion, epoch=0, training=True, fp_optimizer=
         Ms, Zs = {}, {}
         for name, param in model.named_parameters():
             if '.M' in name or '.Z' in name:
-                print(f'name: {name}, shape: {param.shape}')
+                # print(f'name: {name}, shape: {param.shape}')
                 layer_id = name[:-2]
                 if layer_id not in layer_names:
                     layer_names.append(layer_id)
