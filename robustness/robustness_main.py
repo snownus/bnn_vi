@@ -28,7 +28,7 @@ def save_losses(dataset, sgd_train_losses, adam_train_losses, SDP_train_losses,
 
 if __name__ == '__main__':
     hidden_channels = 500
-    lr = 0.001
+    lr = 0.01
     K, L, scale = 4, 40, 100
     complete_data, random_data = generate_complete_graph_data(), generate_random_graph_data()
 
