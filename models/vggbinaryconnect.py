@@ -17,39 +17,39 @@ class VGGBinaryConnect_SDP(nn.Module):
         # self.bn1 = nn.BatchNorm2d(128)
 
         # self.conv2 = nn.Conv2d(128, 128, kernel_size=3, padding=1,bias=False)
-        self.conv2 = BinarizeConv2dSDP(K, scale, 128, 128, kernel_size=3, padding=1,bias=False)
+        self.conv2 = BinarizeConv2dSDP(K, scale, 128, 128, kernel_size=3, padding=1,bias=False, binarize_a=False)
         self.bn2 = nn.BatchNorm2d(128, eps=eps, momentum=momentum,affine=batch_affine)
         # self.bn2 = nn.BatchNorm2d(128)
 
         #self.conv3 = nn.Conv2d(128, 256, kernel_size=3, padding=1,bias=False)
-        self.conv3 = BinarizeConv2dSDP(K, scale, 128, 256, kernel_size=3, padding=1,bias=False)
+        self.conv3 = BinarizeConv2dSDP(K, scale, 128, 256, kernel_size=3, padding=1,bias=False, binarize_a=False)
         self.bn3 = nn.BatchNorm2d(256, eps=eps, momentum=momentum,affine=batch_affine)
         # self.bn3 = nn.BatchNorm2d(256)
 
         #self.conv4 = nn.Conv2d(256, 256, kernel_size=3, padding=1,bias=False)
-        self.conv4 = BinarizeConv2dSDP(K, scale, 256, 256, kernel_size=3, padding=1,bias=False)
+        self.conv4 = BinarizeConv2dSDP(K, scale, 256, 256, kernel_size=3, padding=1,bias=False, binarize_a=False)
         self.bn4 = nn.BatchNorm2d(256, eps=eps, momentum=momentum,affine=batch_affine)
         # self.bn4 = nn.BatchNorm2d(256)
 
 
         #self.conv5 = nn.Conv2d(256, 512, kernel_size=3, padding=1,bias=False)
-        self.conv5 = BinarizeConv2dSDP(K, scale, 256, 512, kernel_size=3, padding=1,bias=False)
+        self.conv5 = BinarizeConv2dSDP(K, scale, 256, 512, kernel_size=3, padding=1,bias=False, binarize_a=False)
         self.bn5 = nn.BatchNorm2d(512, eps=eps, momentum=momentum,affine=batch_affine)
         # self.bn5 = nn.BatchNorm2d(512)
 
         #self.conv6 = nn.Conv2d(512, 512, kernel_size=3, padding=1,bias=False)
-        self.conv6 = BinarizeConv2dSDP(K, scale, 512, 512, kernel_size=3, padding=1,bias=False)
+        self.conv6 = BinarizeConv2dSDP(K, scale, 512, 512, kernel_size=3, padding=1,bias=False, binarize_a=False)
         self.bn6 = nn.BatchNorm2d(512, eps=eps, momentum=momentum,affine=batch_affine)
         # self.bn6 = nn.BatchNorm2d(512)
 
 
         #self.fc1 = nn.Linear(512 * 4 * 4, 1024, bias=False)
-        self.fc1 = BinarizeConv2dSDP(K, scale, 512 * 4 * 4, 1024, kernel_size=1, padding=0, linear=True, bias=False)
+        self.fc1 = BinarizeConv2dSDP(K, scale, 512 * 4 * 4, 1024, kernel_size=1, padding=0, linear=True, bias=False, binarize_a=False)
         self.bn7 = nn.BatchNorm1d(1024,affine=batch_affine)
         # self.bn7 = nn.BatchNorm1d(1024)
 
         #self.fc2 = nn.Linear(1024, 1024, bias=False)
-        self.fc2 = BinarizeConv2dSDP(K, scale, 1024, 1024, kernel_size=1, padding=0, linear=True, bias=False)
+        self.fc2 = BinarizeConv2dSDP(K, scale, 1024, 1024, kernel_size=1, padding=0, linear=True, bias=False, binarize_a=False)
         self.bn8 = nn.BatchNorm1d(1024, affine=batch_affine)
         # self.bn8 = nn.BatchNorm1d(1024)
 
