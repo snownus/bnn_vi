@@ -16,7 +16,6 @@ class AlexNet(nn.Module):
         self.features = nn.Sequential(
             nn.Conv2d(3, 96, kernel_size=11, stride=4, padding=2),
             nn.BatchNorm2d(96),
-            nn.ReLU(inplace=True),
             nn.MaxPool2d(kernel_size=3, stride=2),
             BinarizeConv2dSDP(K, scale, 96, 256, kernel_size=5, stride=1, padding=2, bias=True),
             nn.BatchNorm2d(256, eps=1e-3, momentum=0.1, affine=True),
