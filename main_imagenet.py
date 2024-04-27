@@ -552,31 +552,33 @@ def train(train_loader, model, criterion, scaler, optimizer, epoch):
                 break
 
         with torch.cuda.amp.autocast(enabled=args.fp16_mode):
-            L = int(args.L * args.K)
-            num = sample_uniform_int(0, L + args.K * 2 - 1)
-            if num < L:
-                output = model(input)
-                loss = criterion(output, target)
-            elif L <= num < L + args.K:
-                j = num - L
-                params = model.named_parameters()
-                for name, param in params:
-                    # print(f'name: {name}, param.shape: {param.shape}')
-                    if 'sample' in name and 'downsample' not in name:
-                        param.zero_()
-                        param[0][j] = 1
-                output = model(input)
-                loss = criterion(output, target) 
-            else:
-                j = num - L - args.K
-                params = model.named_parameters()
-                for name, param in params:
-                    # print(f'name: {name}, param.shape: {param.shape}')
-                    if 'sample' in name and 'downsample' not in name:
-                        param.zero_()
-                        param[0][j] = -1
-                output = model(input)
-                loss = criterion(output, target) 
+            output = model(input)
+            loss = criterion(output, target)
+            # L = int(args.L * args.K)
+            # num = sample_uniform_int(0, L + args.K * 2 - 1)
+            # if num < L:
+            #     output = model(input)
+            #     loss = criterion(output, target)
+            # elif L <= num < L + args.K:
+            #     j = num - L
+            #     params = model.named_parameters()
+            #     for name, param in params:
+            #         # print(f'name: {name}, param.shape: {param.shape}')
+            #         if 'sample' in name and 'downsample' not in name:
+            #             param.zero_()
+            #             param[0][j] = 1
+            #     output = model(input)
+            #     loss = criterion(output, target) 
+            # else:
+            #     j = num - L - args.K
+            #     params = model.named_parameters()
+            #     for name, param in params:
+            #         # print(f'name: {name}, param.shape: {param.shape}')
+            #         if 'sample' in name and 'downsample' not in name:
+            #             param.zero_()
+            #             param[0][j] = -1
+            #     output = model(input)
+            #     loss = criterion(output, target) 
 
             # output = model(input)
             # loss = criterion(output, target)
@@ -680,7 +682,8 @@ def validate(val_loader, model, criterion):
             val_loader_len = int(math.ceil(data_iterator._size / args.batch_size))
 
         # compute output
-        L = int(args.L * args.K)
+        L = int(args.L)
+        # L = int(args.L * args.K)
         with torch.no_grad():
             output = model(input)
             loss = criterion(output, target)
@@ -693,30 +696,32 @@ def validate(val_loader, model, criterion):
                 total_loss += loss
                 total_output += output
 
-            for j in range(args.K):
-                params = model.named_parameters()
-                for name, param in params:
-                    # print(f'name: {name}, param.shape: {param.shape}')
-                    if 'sample' in name and 'downsample' not in name:
-                        param.zero_()
-                        param[0][j] = 1
-                output = model(input)
-                total_loss += criterion(output, target)
-                total_output += output
+        #     for j in range(args.K):
+        #         params = model.named_parameters()
+        #         for name, param in params:
+        #             # print(f'name: {name}, param.shape: {param.shape}')
+        #             if 'sample' in name and 'downsample' not in name:
+        #                 param.zero_()
+        #                 param[0][j] = 1
+        #         output = model(input)
+        #         total_loss += criterion(output, target)
+        #         total_output += output
 
-            for j in range(args.K):
-                params = model.named_parameters()
-                for name, param in params:
-                    # print(f'name: {name}, param.shape: {param.shape}')
-                    if 'sample' in name and 'downsample' not in name:
-                        param.zero_()
-                        param[0][j] = -1
-                output = model(input)
-                total_loss += criterion(output, target)
-                total_output += output
+        #     for j in range(args.K):
+        #         params = model.named_parameters()
+        #         for name, param in params:
+        #             # print(f'name: {name}, param.shape: {param.shape}')
+        #             if 'sample' in name and 'downsample' not in name:
+        #                 param.zero_()
+        #                 param[0][j] = -1
+        #         output = model(input)
+        #         total_loss += criterion(output, target)
+        #         total_output += output
             
-            loss = total_loss / (L + args.K * 2)
-            output = total_output / (L + args.K * 2)
+        #     loss = total_loss / (L + args.K * 2)
+        #     output = total_output / (L + args.K * 2)
+            loss = total_loss / L
+            output = total_output / L
 
             # output = model(input)
             # loss = criterion(output, target)
@@ -791,10 +796,10 @@ class AverageMeter(object):
 
 def adjust_learning_rate(optimizer, epoch, step, len_epoch):
     """LR schedule that should yield 76% converged accuracy with batch size 256"""
-    factor = epoch // 60
+    factor = epoch // 30
 
-    if epoch >= 140:
-        factor = factor + 1
+    # if epoch >= 140:
+    #     factor = factor + 1
 
     lr = args.lr*(0.1**factor)
 
