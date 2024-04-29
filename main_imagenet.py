@@ -4,6 +4,8 @@ import shutil
 import time
 import math
 
+from math import cos, pi
+
 import torch
 import torch.nn as nn
 import torch.nn.parallel
@@ -113,6 +115,8 @@ def parse():
                     help='results dir')
     parser.add_argument('-save', metavar='SAVE', default='',
                         help='saved folder')
+    
+    parser.add_argument('--lr_decay', type=str, default='MSteps')
 
     args = parser.parse_args()
     return args
@@ -546,7 +550,10 @@ def train(train_loader, model, criterion, scaler, optimizer, epoch):
 
         if args.prof >= 0: torch.cuda.nvtx.range_push("Body of iteration {}".format(i))
 
-        adjust_learning_rate(optimizer, epoch, i, train_loader_len)
+        if args.lr_decay == 'cos':
+            adjust_learning_rate_cos(optimizer, epoch, i, train_loader_len)
+        elif args.lr_decay == 'MSteps':
+            adjust_learning_rate(optimizer, epoch, i, train_loader_len)
         if args.test:
             if i > 10:
                 break
@@ -798,9 +805,6 @@ def adjust_learning_rate(optimizer, epoch, step, len_epoch):
     """LR schedule that should yield 76% converged accuracy with batch size 256"""
     factor = epoch // 30
 
-    # if epoch >= 140:
-    #     factor = factor + 1
-
     lr = args.lr*(0.1**factor)
 
     """Warmup"""
@@ -808,6 +812,19 @@ def adjust_learning_rate(optimizer, epoch, step, len_epoch):
         lr = lr*float(1 + step + epoch*len_epoch)/(5.*len_epoch)
 
     for param_group in optimizer.param_groups:
+        param_group['lr'] = lr
+
+
+def adjust_learning_rate_cos(optimizer, epoch, step, len_epoch):
+    # first 5 epochs for warmup
+    warmup_iter = 5 * len_epoch
+    current_iter = step + epoch * len_epoch
+    max_iter = args.epochs * len_epoch
+    lr = args.lr * (1 + cos(pi * (current_iter - warmup_iter) / (max_iter - warmup_iter))) / 2
+    if epoch < 5:
+        lr = args.lr * current_iter / warmup_iter
+
+    for i, param_group in enumerate(optimizer.param_groups):
         param_group['lr'] = lr
 
 
