@@ -5,3 +5,4 @@ from .sdp_resnet18 import *
 from .birealnet import *
 from .vggbinaryconnect import *
 from .alexnet import *
+from .swin_transformer import *
