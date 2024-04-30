@@ -4,19 +4,30 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
-        // {
-        //     "args": ["--nproc_per_node", "4", "/home/gengxue/git/bnn_vi/main_imagenet.py", 
-        //     "-save", "imagenet_birealnet18", "--dali_cpu", 
-        //     "-a", "birealnet18", "-j", "20", "-K", "4", "-L", "10", "-scale", "1000", 
-        //     "-b", "256", "--lr", "0.1", "--epochs", "150", "--wd", "1e-4",  
-        //     "--resume", "results/imagenet_birealnet18_Apr05_02-13-19_e0201de374bc/checkpoint.pth.tar", 
-        //     "/home/gengxue/data/imagenet"],
-        //     "type": "python",
-        //     "program": "/home/gengxue/git/bnn_vi/py3.8/bin/torchrun",
-        //     "request": "launch",
-        //     "name": "Launch Program",
-        //     "env": {"CUDA_VISIBLE_DEVICES":"4,5,6,7"},
-        // },
+        {
+            "args": ["--master_port", "10087", "--nproc_per_node", "4", "/home/gengxue/git/bnn_vi/main_imagenet.py", 
+            "-save", "imagenet_swin-tiny", "--dali_cpu", 
+            "-a", "swin_tiny_patch4_window7_224", "-j", "20", "-K", "4", "-L", "40", "-scale", "100", 
+            "-b", "128", "--lr", "0.5", "--epochs", "150", "--wd", "1e-5",  
+            "/home/gengxue/data/imagenet"],
+            "type": "python",
+            "program": "/home/gengxue/git/bnn_vi/py3.8/bin/torchrun",
+            "request": "launch",
+            "name": "imagenet_swin-tiny",
+            "env": {"CUDA_VISIBLE_DEVICES":"4,5,6,7"},
+        },
+        {
+            "args": ["--master_port", "10088", "--nproc_per_node", "4", "/home/gengxue/git/bnn_vi/main_imagenet.py", 
+            "-save", "imagenet_birealnet18", "--dali_cpu", 
+            "-a", "birealnet18", "-j", "20", "-K", "4", "-L", "40", "-scale", "100", 
+            "-b", "256", "--lr", "0.5", "--epochs", "150", "--wd", "5e-5",  
+            "/home/gengxue/data/imagenet"],
+            "type": "python",
+            "program": "/home/gengxue/git/bnn_vi/py3.8/bin/torchrun",
+            "request": "launch",
+            "name": "imagenet_birealnet18",
+            "env": {"CUDA_VISIBLE_DEVICES":"0,1,2,3"},
+        },
         // {
         //     "args": ["--model", "resnet_binary_sdp", "--save", "resnet_cifar100_SDP_LL5_21", "--dataset", "cifar100", "--binarization", 
         //     "det", "--input_size", "32", "--epochs", "200", "-b", "256", "-j", "20", "-K", "4", 
@@ -180,81 +191,81 @@
         // },
 
             // cifar-10; VGGNet; 
-            {
-                "args": ["--model", "vgg_cifar10_sdp", "--save", "vgg_cifar10_seed=2024", "--dataset", "cifar10", "--binarization", 
-                "det", "--input_size", "32", "--epochs", "200", "-b", "256", "-j", "20", "-K", "4", 
-                "--seed", "2024", 
-                "-scale", "1000", "--gpus", "4",
-            ],
-                "type": "python",
-                "python": "/home/gengxue/git/bnn_vi/py3.8/bin/python",
-                "request": "launch",
-                "name": "seed2024",
-                // "skipFiles": [
-                //     "<node_internals>/**"
-                // ],
-                "program": "/home/gengxue/git/bnn_vi/main_sdp1_woz.py"
-            },
-            {
-                "args": ["--model", "vgg_cifar10_sdp", "--save", "vgg_cifar10_seed=2020", "--dataset", "cifar10", "--binarization", 
-                "det", "--input_size", "32", "--epochs", "200", "-b", "256", "-j", "20", "-K", "4", 
-                "--seed", "2020", 
-                "-scale", "1000", "--gpus", "4",
-            ],
-                "type": "python",
-                "python": "/home/gengxue/git/bnn_vi/py3.8/bin/python",
-                "request": "launch",
-                "name": "seed2020",
-                // "skipFiles": [
-                //     "<node_internals>/**"
-                // ],
-                "program": "/home/gengxue/git/bnn_vi/main_sdp1_woz.py"
-            },
-            {
-                "args": ["--model", "vgg_cifar10_sdp", "--save", "vgg_cifar10_seed=1314", "--dataset", "cifar10", "--binarization", 
-                "det", "--input_size", "32", "--epochs", "200", "-b", "256", "-j", "20", "-K", "4", 
-                "--seed", "1314", 
-                "-scale", "1000", "--gpus", "5",
-            ],
-                "type": "python",
-                "python": "/home/gengxue/git/bnn_vi/py3.8/bin/python",
-                "request": "launch",
-                "name": "seed1314",
-                // "skipFiles": [
-                //     "<node_internals>/**"
-                // ],
-                "program": "/home/gengxue/git/bnn_vi/main_sdp1_woz.py"
-            },
-            {
-                "args": ["--model", "vgg_cifar10_sdp", "--save", "vgg_cifar10_seed=512", "--dataset", "cifar10", "--binarization", 
-                "det", "--input_size", "32", "--epochs", "200", "-b", "256", "-j", "20", "-K", "4", 
-                "--seed", "512", 
-                "-scale", "1000", "--gpus", "6",
-            ],
-                "type": "python",
-                "python": "/home/gengxue/git/bnn_vi/py3.8/bin/python",
-                "request": "launch",
-                "name": "seed512",
-                // "skipFiles": [
-                //     "<node_internals>/**"
-                // ],
-                "program": "/home/gengxue/git/bnn_vi/main_sdp1_woz.py"
-            },
-            {
-                "args": ["--model", "vgg_cifar10_sdp", "--save", "vgg_cifar10_seed=2333", "--dataset", "cifar10", "--binarization", 
-                "det", "--input_size", "32", "--epochs", "200", "-b", "256", "-j", "20", "-K", "4", 
-                "--seed", "2333", 
-                "-scale", "1000", "--gpus", "7",
-            ],
-                "type": "python",
-                "python": "/home/gengxue/git/bnn_vi/py3.8/bin/python",
-                "request": "launch",
-                "name": "seed2333",
-                // "skipFiles": [
-                //     "<node_internals>/**"
-                // ],
-                "program": "/home/gengxue/git/bnn_vi/main_sdp1_woz.py"
-            },
+            // {
+            //     "args": ["--model", "vgg_cifar10_sdp", "--save", "vgg_cifar10_seed=2024", "--dataset", "cifar10", "--binarization", 
+            //     "det", "--input_size", "32", "--epochs", "200", "-b", "256", "-j", "20", "-K", "4", 
+            //     "--seed", "2024", 
+            //     "-scale", "1000", "--gpus", "4",
+            // ],
+            //     "type": "python",
+            //     "python": "/home/gengxue/git/bnn_vi/py3.8/bin/python",
+            //     "request": "launch",
+            //     "name": "seed2024",
+            //     // "skipFiles": [
+            //     //     "<node_internals>/**"
+            //     // ],
+            //     "program": "/home/gengxue/git/bnn_vi/main_sdp1_woz.py"
+            // },
+            // {
+            //     "args": ["--model", "vgg_cifar10_sdp", "--save", "vgg_cifar10_seed=2020", "--dataset", "cifar10", "--binarization", 
+            //     "det", "--input_size", "32", "--epochs", "200", "-b", "256", "-j", "20", "-K", "4", 
+            //     "--seed", "2020", 
+            //     "-scale", "1000", "--gpus", "4",
+            // ],
+            //     "type": "python",
+            //     "python": "/home/gengxue/git/bnn_vi/py3.8/bin/python",
+            //     "request": "launch",
+            //     "name": "seed2020",
+            //     // "skipFiles": [
+            //     //     "<node_internals>/**"
+            //     // ],
+            //     "program": "/home/gengxue/git/bnn_vi/main_sdp1_woz.py"
+            // },
+            // {
+            //     "args": ["--model", "vgg_cifar10_sdp", "--save", "vgg_cifar10_seed=1314", "--dataset", "cifar10", "--binarization", 
+            //     "det", "--input_size", "32", "--epochs", "200", "-b", "256", "-j", "20", "-K", "4", 
+            //     "--seed", "1314", 
+            //     "-scale", "1000", "--gpus", "5",
+            // ],
+            //     "type": "python",
+            //     "python": "/home/gengxue/git/bnn_vi/py3.8/bin/python",
+            //     "request": "launch",
+            //     "name": "seed1314",
+            //     // "skipFiles": [
+            //     //     "<node_internals>/**"
+            //     // ],
+            //     "program": "/home/gengxue/git/bnn_vi/main_sdp1_woz.py"
+            // },
+            // {
+            //     "args": ["--model", "vgg_cifar10_sdp", "--save", "vgg_cifar10_seed=512", "--dataset", "cifar10", "--binarization", 
+            //     "det", "--input_size", "32", "--epochs", "200", "-b", "256", "-j", "20", "-K", "4", 
+            //     "--seed", "512", 
+            //     "-scale", "1000", "--gpus", "6",
+            // ],
+            //     "type": "python",
+            //     "python": "/home/gengxue/git/bnn_vi/py3.8/bin/python",
+            //     "request": "launch",
+            //     "name": "seed512",
+            //     // "skipFiles": [
+            //     //     "<node_internals>/**"
+            //     // ],
+            //     "program": "/home/gengxue/git/bnn_vi/main_sdp1_woz.py"
+            // },
+            // {
+            //     "args": ["--model", "vgg_cifar10_sdp", "--save", "vgg_cifar10_seed=2333", "--dataset", "cifar10", "--binarization", 
+            //     "det", "--input_size", "32", "--epochs", "200", "-b", "256", "-j", "20", "-K", "4", 
+            //     "--seed", "2333", 
+            //     "-scale", "1000", "--gpus", "7",
+            // ],
+            //     "type": "python",
+            //     "python": "/home/gengxue/git/bnn_vi/py3.8/bin/python",
+            //     "request": "launch",
+            //     "name": "seed2333",
+            //     // "skipFiles": [
+            //     //     "<node_internals>/**"
+            //     // ],
+            //     "program": "/home/gengxue/git/bnn_vi/main_sdp1_woz.py"
+            // },
 
         // tiny-imagenet; resnet18
         // {
@@ -337,11 +348,163 @@
         //     // ],
         //     "program": "/home/gengxue/git/bnn_vi/main_sdp1_woz.py"
         // }
-    ],
-    "compounds": [
+
         {
-            "name": "Launch All",
-            "configurations": ["seed1314", "seed2333", "seed2024", "seed512", "seed2020"],
-        }
-    ]
+            "args": [
+        ],
+            "type": "python",
+            "python": "/home/gengxue/git/bnn_vi/py3.8/bin/python",
+            "request": "launch",
+            "name": "robustness",
+            "env": {
+                "CUDA_VISIBLE_DEVICES": "7"  // Control which GPUs are visible
+            }
+            // "skipFiles": [
+            //     "<node_internals>/**"
+            // ],
+            "program": "/home/gengxue/git/bnn_vi/robustness.py"
+        },
+        {
+            "args": ["--model", "vgg_cifar100_sdp", "--save", "vgg_cifar100_seed=2020_w_only_gaussian_qudrature", "--dataset", "cifar100", "--binarization", 
+            "det", "--input_size", "32", "--epochs", "200", "-b", "256", "-j", "20", "-K", "4", 
+            "--seed", "2020", 
+            "-scale", "100", "--gpus", "6",
+        ],
+            "type": "python",
+            "python": "/home/gengxue/git/bnn_vi/py3.8/bin/python",
+            "request": "launch",
+            "name": "seed2020_w_only_gaussian_qudrature",
+            // "skipFiles": [
+            //     "<node_internals>/**"
+            // ],
+            "program": "/home/gengxue/git/bnn_vi/main_sdp1_w_only_gaussian_qudrature.py"
+        },
+        {
+            "args": ["--model", "vgg_cifar100_sdp", "--save", "vgg_cifar100_seed=2024_w_only_gaussian_qudrature", "--dataset", "cifar100", "--binarization", 
+            "det", "--input_size", "32", "--epochs", "200", "-b", "256", "-j", "20", "-K", "4", 
+            "--seed", "2024", 
+            "-scale", "100", "--gpus", "4",
+        ],
+            "type": "python",
+            "python": "/home/gengxue/git/bnn_vi/py3.8/bin/python",
+            "request": "launch",
+            "name": "seed2024_w_only_gaussian_qudrature",
+            // "skipFiles": [
+            //     "<node_internals>/**"
+            // ],
+            "program": "/home/gengxue/git/bnn_vi/main_sdp1_w_only_gaussian_qudrature.py"
+        },
+        {
+            "args": ["--model", "vgg_cifar100_sdp", "--save", "vgg_cifar100_seed=2020_wo_gaussian_qudrature_1", "--dataset", "cifar100", "--binarization", 
+            "det", "--input_size", "32", "--epochs", "200", "-b", "256", "-j", "10", "-K", "4", 
+            "--seed", "2020", 
+            "-scale", "100", "--gpus", "3",
+            "--resume", "results/vgg_cifar100_seed=2020_wo_gaussian_qudrature/checkpoint.pth.tar"
+        ],
+            "type": "python",
+            "python": "/home/gengxue/git/bnn_vi/py3.8/bin/python",
+            "request": "launch",
+            "name": "seed2020_wo_gaussian_qudrature",
+            // "skipFiles": [
+            //     "<node_internals>/**"
+            // ],
+            "program": "/home/gengxue/git/bnn_vi/main_sdp1_wo_gaussian_qudrature.py"
+        },
+        {
+            "args": ["--model", "vgg_cifar100_sdp", "--save", "vgg_cifar100_seed=512_wo_gaussian_qudrature_1", "--dataset", "cifar100", "--binarization", 
+            "det", "--input_size", "32", "--epochs", "200", "-b", "256", "-j", "10", "-K", "4", 
+            "--seed", "512", 
+            "-scale", "100", "--gpus", "4",
+            "--resume", "results/vgg_cifar100_seed=512_wo_gaussian_qudrature/checkpoint.pth.tar"
+        ],
+            "type": "python",
+            "python": "/home/gengxue/git/bnn_vi/py3.8/bin/python",
+            "request": "launch",
+            "name": "seed512_wo_gaussian_qudrature",
+            // "skipFiles": [
+            //     "<node_internals>/**"
+            // ],
+            "program": "/home/gengxue/git/bnn_vi/main_sdp1_wo_gaussian_qudrature.py"
+        },
+        {
+            "args": ["--model", "vgg_cifar100_sdp", "--save", "vgg_cifar100_seed=2024_wo_gaussian_qudrature_1", "--dataset", "cifar100", "--binarization", 
+            "det", "--input_size", "32", "--epochs", "200", "-b", "256", "-j", "10", "-K", "4", 
+            "--seed", "2024", 
+            "-scale", "100", "--gpus", "5",
+            "--resume", "results/vgg_cifar100_seed=2024_wo_gaussian_qudrature/checkpoint.pth.tar"
+        ],
+            "type": "python",
+            "python": "/home/gengxue/git/bnn_vi/py3.8/bin/python",
+            "request": "launch",
+            "name": "seed2024_wo_gaussian_qudrature",
+            // "skipFiles": [
+            //     "<node_internals>/**"
+            // ],
+            "program": "/home/gengxue/git/bnn_vi/main_sdp1_wo_gaussian_qudrature.py"
+        },
+        {
+            "args": ["--model", "vgg_cifar100_sdp", "--save", "vgg_cifar100_seed=2333_wo_gaussian_qudrature_1", "--dataset", "cifar100", "--binarization", 
+            "det", "--input_size", "32", "--epochs", "200", "-b", "256", "-j", "10", "-K", "4", 
+            "--seed", "2333", 
+            "-scale", "100", "--gpus", "6",
+            "--resume", "results/vgg_cifar100_seed=2333_wo_gaussian_qudrature/checkpoint.pth.tar"
+        ],
+            "type": "python",
+            "python": "/home/gengxue/git/bnn_vi/py3.8/bin/python",
+            "request": "launch",
+            "name": "seed2333_wo_gaussian_qudrature",
+            // "skipFiles": [
+            //     "<node_internals>/**"
+            // ],
+            "program": "/home/gengxue/git/bnn_vi/main_sdp1_wo_gaussian_qudrature.py"
+        },
+        {
+            "args": ["--model", "vgg_cifar100_sdp", "--save", "vgg_cifar100_seed=1314_network_z", "--dataset", "cifar100", "--binarization", 
+            "det", "--input_size", "32", "--epochs", "200", "-b", "256", "-j", "10", "-K", "4", 
+            "--seed", "1314", 
+            "-scale", "100", "--gpus", "7", "--wd", "5e-5", "--lr", "0.5", "-L", "40",
+            "--milestones", "60", "120", "180",
+        ],
+            "type": "python",
+            "python": "/home/gengxue/git/bnn_vi/py3.8/bin/python",
+            "request": "launch",
+            "name": "network_z",
+            // "skipFiles": [
+            //     "<node_internals>/**"
+            // ],
+            "program": "/home/gengxue/git/bnn_vi/main_sdp1_network_z.py"
+        },
+        {
+            "args": [],
+            "type": "python",
+            "python": "/home/gengxue/git/bnn_vi/py3.8/bin/python",
+            "request": "launch",
+            "name": "robustness_main",
+            // "skipFiles": [
+            //     "<node_internals>/**"
+            // ],
+            "program": "/home/gengxue/git/bnn_vi/robustness_main.py"
+        },
+        {
+            "args": ["--model", "vggbinaryconnect_cifar100", "--save", "vggbinaryconnect_cifar100", "--dataset", "cifar100", "--binarization", 
+            "det", "--input_size", "32", "--epochs", "200", "-b", "256", "-j", "10", "-K", "4", 
+            "--seed", "2333",  "-scale", "100", "--gpus", "6", "--wd", "1e-4", "--lr", "0.5", "-L", "40",
+            "--milestones", "60", "120", "180",
+        ],
+            "type": "python",
+            "python": "/home/gengxue/git/bnn_vi/py3.8/bin/python",
+            "request": "launch",
+            "name": "vggbinaryconnect_cifar100",
+            // "skipFiles": [
+            //     "<node_internals>/**"
+            // ],
+            "program": "/home/gengxue/git/bnn_vi/main_sdp1_wo_gaussian_qudrature.py"
+        },
+    ],
+    // "compounds": [
+    //     {
+    //         "name": "Launch All",
+    //         "configurations": ["seed1314", "seed2333", "seed2024", "seed512", "seed2020"],
+    //     }
+    // ]
 }
