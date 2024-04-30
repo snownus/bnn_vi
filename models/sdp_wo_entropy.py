@@ -36,8 +36,13 @@ class BinarizeConv2dSDP(nn.Module):
 
     def __init__(self, K, scale, in_chn, out_chn, dropout=0, kernel_size=3, 
                  stride=1, padding=1, bias=False, linear=False, binarize_a=True):
+        #TODO: BIAS, scaling factor; and dropout;
         super(BinarizeConv2dSDP, self).__init__()
-        self.alpha = nn.Parameter(torch.rand(out_chn, 1, 1), requires_grad=True)
+        self.Alpha = nn.Parameter(torch.rand(out_chn, 1, 1), requires_grad=True)
+        if bias:
+            self.bias = nn.Parameter(torch.rand(out_chn), requires_grad=True)
+        else:
+            self.bias = None
         self.stride = stride
         self.padding = padding
         self.number_of_weights = in_chn * out_chn * kernel_size * kernel_size
@@ -87,17 +92,20 @@ class BinarizeConv2dSDP(nn.Module):
         bw = BinaryQuantize().apply(real_weights)
 
         a = input
-        if self.linear:
-            a = a[:, :, None, None]
         if self.binarize_a:
             ba = BinaryQuantize_a().apply(a)
         else:
             ba = a
-        output = F.conv2d(ba, bw, stride=self.stride, padding=self.padding, bias=None)
-        #* scaling factor
-        output = output * self.alpha
+        
+        alpha = self.Alpha
         if self.linear:
-            output = torch.squeeze(output)
+            bw = torch.squeeze(bw)
+            output = F.linear(ba, bw, bias=self.bias)
+            alpha = torch.squeeze(alpha)
+        else:
+            output = F.conv2d(ba, bw, stride=self.stride, padding=self.padding, bias=self.bias)
+            
+        output = output * alpha
 
         return output
 
