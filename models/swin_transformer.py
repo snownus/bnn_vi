@@ -12,6 +12,8 @@ from timm.models.layers import DropPath, to_2tuple, trunc_normal_
 
 from .sdp_wo_entropy import BinarizeConv2dSDP
 
+from .utils_quant import SoftmaxBinaryQuantizer
+
 __all__ = ['swin_tiny_patch4_window7_224']
 
 
@@ -109,14 +111,18 @@ class WindowAttention(nn.Module):
         self.register_buffer("relative_position_index", relative_position_index)
 
         # self.qkv = nn.Linear(dim, dim * 3, bias=qkv_bias)
-        self.qkv = BinarizeConv2dSDP(K, scale, dim, dim * 3, kernel_size=1, padding=0, linear=True, bias=qkv_bias)
+        self.qkv = BinarizeConv2dSDP(K, scale, dim, dim * 3, kernel_size=1, padding=0, linear=True, bias=qkv_bias, 
+                                     binarize_a=False, binarize_out=True)
         self.attn_drop = nn.Dropout(attn_drop)
         # self.proj = nn.Linear(dim, dim)
-        self.proj = BinarizeConv2dSDP(K, scale, dim, dim, kernel_size=1, padding=0, linear=True, bias=True)
+        self.proj = BinarizeConv2dSDP(K, scale, dim, dim, kernel_size=1, padding=0, linear=True, bias=True,
+                                      binarize_a=False, binarize_out=False)
         self.proj_drop = nn.Dropout(proj_drop)
 
         trunc_normal_(self.relative_position_bias_table, std=.02)
-        self.softmax = nn.Softmax(dim=-1)
+        # self.softmax = nn.Softmax(dim=-1)
+
+        self.attn_quant_layer = SoftmaxBinaryQuantizer().apply
 
     def forward(self, x, mask=None):
         """
@@ -136,15 +142,16 @@ class WindowAttention(nn.Module):
         relative_position_bias = relative_position_bias.permute(2, 0, 1).contiguous()  # nH, Wh*Ww, Wh*Ww
         attn = attn + relative_position_bias.unsqueeze(0)
 
-        if mask is not None:
-            nW = mask.shape[0]
-            attn = attn.view(B_ // nW, nW, self.num_heads, N, N) + mask.unsqueeze(1).unsqueeze(0)
-            attn = attn.view(-1, self.num_heads, N, N)
-            attn = self.softmax(attn)
-        else:
-            attn = self.softmax(attn)
+        # if mask is not None:
+        #     nW = mask.shape[0]
+        #     attn = attn.view(B_ // nW, nW, self.num_heads, N, N) + mask.unsqueeze(1).unsqueeze(0)
+        #     attn = attn.view(-1, self.num_heads, N, N)
+        #     attn = self.softmax(attn)
+        # else:
+        #     attn = self.softmax(attn)
 
         attn = self.attn_drop(attn)
+        attn = self.attn_quant_layer(attn).float().detach() - attn.softmax(-1).detach() + attn.softmax(-1)
 
         x = (attn @ v).transpose(1, 2).reshape(B_, N, C)
         x = self.proj(x)
