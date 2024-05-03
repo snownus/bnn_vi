@@ -34,8 +34,8 @@ class BinaryActivation(nn.Module):
 
 class BinarizeConv2dSDP(nn.Module):
 
-    def __init__(self, K, scale, in_chn, out_chn, dropout=0, kernel_size=3, 
-                 stride=1, padding=1, bias=False, linear=False, binarize_a=True):
+    def __init__(self, K, scale, in_chn, out_chn, kernel_size=3, 
+                 stride=1, padding=1, bias=False, linear=False, binarize_a=True, binarize_out=False):
         #TODO: BIAS, scaling factor; and dropout;
         super(BinarizeConv2dSDP, self).__init__()
         self.Alpha = nn.Parameter(torch.rand(out_chn, 1, 1), requires_grad=True)
@@ -66,6 +66,8 @@ class BinarizeConv2dSDP(nn.Module):
         self.in_chn = in_chn
         self.out_chn = out_chn
         self.binarize_a = binarize_a
+
+        self.binarize_out = binarize_out
         
         # get the i^th column of Z.
         self.sample = nn.Parameter(torch.zeros((1, K)), requires_grad=False)
@@ -107,7 +109,11 @@ class BinarizeConv2dSDP(nn.Module):
             
         output = output * alpha
 
-        return output
+        out_a = output
+        if self.binarize_out:
+            out_a = BinaryQuantize_a().apply(output)
+
+        return out_a
 
 
 class SDP(Function):
