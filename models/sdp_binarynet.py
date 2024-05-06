@@ -8,6 +8,8 @@ from .sdp_wo_entropy import BinarizeConv2dSDP
 
 # from .sdp_wo_z import BinarizeConv2dSDP
 
+# from .sdp_wo_entropy_network import BinarizeConv2dSDP
+
 
 def init_model(model):
     for m in model.modules():
