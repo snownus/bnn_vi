@@ -22,6 +22,8 @@ import numpy as np
 import random
 import copy
 
+from math import cos, pi
+
 from models import BinarizeConv2dSDP
 from torch.utils.tensorboard import SummaryWriter
 
@@ -97,6 +99,9 @@ parser.add_argument('-L', type=float, default=10, metavar='sampling frequency',
                     help='sample 2K+L*K')
 parser.add_argument('--seed', type=int, default=2020, metavar='sampling frequency', help='seed value')
 parser.add_argument('--milestones', metavar='N', type=int, nargs='+', help='milestones')
+
+parser.add_argument('--lr_decay', type=str, default='MSteps')
+
 
 writer = SummaryWriter()
 train_loss_idx_value = 0
@@ -257,11 +262,11 @@ def main():
     #     {'params': params_without_decay}  # No weight decay for other parameters
     # ], lr=args.lr, momentum=args.momentum)
 
-    lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(fp_optimizer, milestones=args.milestones, gamma=0.1)
+    # lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(fp_optimizer, milestones=args.milestones, gamma=0.1)
 
     # lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(fp_optimizer, milestones=[60, 90], gamma=0.1)
-    for i in range(args.start_epoch):
-        lr_scheduler.step()
+    # for i in range(args.start_epoch):
+    #     lr_scheduler.step()
 
     for epoch in range(args.start_epoch, args.epochs):
         # fp_optimizer = torch.optim.Adam(fp_parameters, lr=0.001)
@@ -270,7 +275,7 @@ def main():
 
         # train for one epoch
         train_loss, train_prec1, train_prec5 = train(train_loader, model, criterion, epoch, fp_optimizer)
-        lr_scheduler.step()
+        # lr_scheduler.step()
 
         # evaluate on validation set
         val_loss, val_prec1, val_prec5 = validate(
@@ -380,7 +385,9 @@ def forward(data_loader, model, criterion, epoch=0, training=True, fp_optimizer=
       # Write the network graph at epoch 0, batch 0
         # if epoch == 0 and i == 0:
         #     writer.add_graph(model, input_to_model=inputs[0:2], verbose=False)
-
+        train_loader_len = len(data_loader)
+        if args.lr_decay == 'cos' and training:
+            adjust_learning_rate_cos(fp_optimizer, epoch, i, train_loader_len)
         # measure data loading time
         data_time.update(time.time() - end)
         if args.gpus is not None:
@@ -467,6 +474,19 @@ def validate(data_loader, model, criterion, epoch):
     model.eval()
     return forward(data_loader, model, criterion, epoch,
                    training=False, fp_optimizer=None)
+
+
+def adjust_learning_rate_cos(optimizer, epoch, step, len_epoch):
+    # first 5 epochs for warmup
+    warmup_iter = 5 * len_epoch
+    current_iter = step + epoch * len_epoch
+    max_iter = args.epochs * len_epoch
+    lr = args.lr * (1 + cos(pi * (current_iter - warmup_iter) / (max_iter - warmup_iter))) / 2
+    if epoch < 5:
+        lr = args.lr * current_iter / warmup_iter
+
+    for i, param_group in enumerate(optimizer.param_groups):
+        param_group['lr'] = lr
 
 
 if __name__ == '__main__':
