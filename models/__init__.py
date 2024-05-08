@@ -6,3 +6,4 @@ from .birealnet import *
 from .vggbinaryconnect import *
 from .alexnet import *
 from .swin_transformer import *
+from .sdp_vgg_small import *
