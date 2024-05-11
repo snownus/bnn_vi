@@ -115,7 +115,10 @@ class ResNet(nn.Module):
         self.in_planes = num_channel[0]
         self.binarize_a = binarize_a
 
-        self.conv1 = nn.Conv2d(3, num_channel[0], kernel_size=3, stride=1, padding=1, bias=False)
+        stride = 1
+        if num_classes == 200:
+            stride=2
+        self.conv1 = nn.Conv2d(3, num_channel[0], kernel_size=3, stride=stride, padding=1, bias=False)
         self.bn1 = nn.BatchNorm2d(num_channel[0])
         self.layer1 = self._make_layer(K, scale, block, num_channel[0], num_blocks[0], stride=1)
         self.layer2 = self._make_layer(K, scale, block, num_channel[1], num_blocks[1], stride=2)
@@ -159,6 +162,8 @@ def resnet18_1w1a(**kwargs):
         num_classes = 10
     elif dataset == 'cifar100':
         num_classes = 100
+    elif dataset == 'tiny_imagenet':
+        num_classes = 200
     return ResNet(K, scale, BasicBlock_1w1a, [2,2,2,2], [64,128,256,512], num_classes=num_classes)
 
 
@@ -171,6 +176,8 @@ def resnet18_1w32a(**kwargs):
         num_classes = 10
     elif dataset == 'cifar100':
         num_classes = 100
+    elif dataset == 'tiny_imagenet':
+        num_classes = 200
     return ResNet(K, scale, BasicBlock_1w32a, [2,2,2,2], [64,128,256,512], num_classes=num_classes)
 
 
