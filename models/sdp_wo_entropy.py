@@ -70,8 +70,8 @@ class BinarizeConv2dSDP(nn.Module):
 
         self.binarize_out = binarize_out
         self.binarize_opt = binarize_opt
-        self.kk = torch.tensor([10.]).float()
-        self.tt = torch.tensor([0.1]).float()
+        self.kk = torch.tensor([10.]).float().cuda()
+        self.tt = torch.tensor([0.1]).float().cuda()
         
         # get the i^th column of Z.
         self.sample = nn.Parameter(torch.zeros((1, K)), requires_grad=False)
