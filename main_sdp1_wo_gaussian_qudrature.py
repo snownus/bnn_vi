@@ -205,15 +205,15 @@ def main():
     model.type(args.type)
     
     # show summary of model
-    if model_config.get('dataset') == 'imagenet':
-        input_size = model_config.get('input_size') or 224
-        summary(model, (3, input_size, input_size))
-    if model_config.get('dataset') == 'tiny_imagenet':
-        input_size = model_config.get('input_size') or 64
-        summary(model, (3, input_size, input_size))
-    elif 'cifar' in args.dataset:
-        input_size = model_config.get('input_size') or 32
-        summary(model, (3, input_size, input_size))
+    # if model_config.get('dataset') == 'imagenet':
+    #     input_size = model_config.get('input_size') or 224
+    #     summary(model, (3, input_size, input_size))
+    # if model_config.get('dataset') == 'tiny_imagenet':
+    #     input_size = model_config.get('input_size') or 64
+    #     summary(model, (3, input_size, input_size))
+    # elif 'cifar' in args.dataset:
+    #     input_size = model_config.get('input_size') or 32
+    #     summary(model, (3, input_size, input_size))
     
 
     val_data = get_dataset(args.dataset, 'val', transform['eval'])

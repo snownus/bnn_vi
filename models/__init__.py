@@ -9,4 +9,4 @@ from .swin_transformer import *
 from .sdp_vgg_small import *
 from .sdp_resnet import *
 from .sdp_vgg16 import *
-
+from .birealnet_recu import *

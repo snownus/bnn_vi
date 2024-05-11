@@ -117,6 +117,7 @@ def parse():
                         help='saved folder')
     
     parser.add_argument('--lr_decay', type=str, default='MSteps')
+    parser.add_argument('--binary_opt', type=str, default='ReCU')
 
     args = parser.parse_args()
     return args
@@ -256,7 +257,7 @@ def main():
     if args.local_rank == 0:
         logging.info(f"creating model: {args.arch}")
     model = models.__dict__[args.arch]
-    model_config = {'K': args.K, 'scale': args.scale}
+    model_config = {'K': args.K, 'scale': args.scale, "binary_opt": args.binary_opt}
     model = model(**model_config)
 
     if hasattr(torch, 'channels_last') and  hasattr(torch, 'contiguous_format'):
