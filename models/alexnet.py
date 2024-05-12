@@ -6,7 +6,7 @@ import torch.nn.functional as F
 
 from .sdp_wo_entropy import BinarizeConv2dSDP
 
-__all__ = ['AlexNet', 'alexnet']
+__all__ = ['AlexNet', 'alexnet_1w1a', 'alexnet_1w32a']
 
 class AlexNet(nn.Module):
 
@@ -31,7 +31,7 @@ class AlexNet(nn.Module):
         self.classifier = nn.Sequential(
             BinarizeConv2dSDP(K, scale, 256 * 6 * 6, 4096, kernel_size=1, padding=0, linear=True, bias=True, binarize_a=binarize_a),
             nn.BatchNorm1d(4096, eps=1e-3, momentum=0.1, affine=True),
-            BinarizeConv2dSDP(K, scale, 4096, 4096, kernel_size=1, padding=0, dropout=0.5, linear=True, bias=True, binarize_a=binarize_a),
+            BinarizeConv2dSDP(K, scale, 4096, 4096, kernel_size=1, padding=0, linear=True, bias=True, binarize_a=binarize_a),
             nn.BatchNorm1d(4096, eps=1e-3, momentum=0.1, affine=True),
             nn.Dropout(),
             nn.Linear(4096, num_classes),

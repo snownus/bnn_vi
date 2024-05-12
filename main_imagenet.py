@@ -257,7 +257,7 @@ def main():
     if args.local_rank == 0:
         logging.info(f"creating model: {args.arch}")
     model = models.__dict__[args.arch]
-    model_config = {'K': args.K, 'scale': args.scale, "binary_opt": args.binary_opt}
+    model_config = {'K': args.K, 'scale': args.scale}#, "binary_opt": args.binary_opt}
     model = model(**model_config)
 
     if hasattr(torch, 'channels_last') and  hasattr(torch, 'contiguous_format'):
