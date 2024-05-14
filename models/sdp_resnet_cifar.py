@@ -13,7 +13,7 @@ import torch.nn.init as init
 from .sdp_wo_entropy import BinarizeConv2dSDP
 
 
-__all__ =['resnet18_1w1a', 'resnet18_1w32a']
+__all__ =['resnet18_1w1a_cifar', 'resnet18_1w32a_cifar']
 
 def _weights_init(m):
     if isinstance(m, nn.Conv2d):
@@ -153,7 +153,7 @@ class ResNet(nn.Module):
         return out 
 
 
-def resnet18_1w1a(**kwargs):
+def resnet18_1w1a_cifar(**kwargs):
     K = kwargs.get( 'K', 2)
     scale = kwargs.get('scale', 100)
     dataset = kwargs.get('dataset', 'cifar10')
@@ -167,7 +167,7 @@ def resnet18_1w1a(**kwargs):
     return ResNet(K, scale, BasicBlock_1w1a, [2,2,2,2], [64,128,256,512], num_classes=num_classes)
 
 
-def resnet18_1w32a(**kwargs):
+def resnet18_1w32a_cifar(**kwargs):
     K = kwargs.get( 'K', 2)
     scale = kwargs.get('scale', 100)
     dataset = kwargs.get('dataset', 'cifar10')
@@ -181,14 +181,14 @@ def resnet18_1w32a(**kwargs):
     return ResNet(K, scale, BasicBlock_1w32a, [2,2,2,2], [64,128,256,512], num_classes=num_classes)
 
 
-def resnet34_1w1a(**kwargs):
+def resnet34_1w1a_cifar(**kwargs):
     return ResNet(BasicBlock_1w1a, [3,4,6,3],[64,128,256,512],**kwargs)
 
-def resnet50_1w1a(**kwargs):
+def resnet50_1w1a_cifar(**kwargs):
     return ResNet(Bottleneck_1w1a, [3,4,6,3],[64,128,256,512],**kwargs)
 
-def resnet101_1w1a(**kwargs):
+def resnet101_1w1a_cifar(**kwargs):
     return ResNet(Bottleneck_1w1a, [3,4,23,3],[64,128,256,512],**kwargs)
 
-def resnet152_1w1a(**kwargs):
+def resnet152_1w1a_cifar(**kwargs):
     return ResNet(Bottleneck_1w1a, [3,8,36,3],[64,128,256,512],**kwargs)
