@@ -279,7 +279,7 @@ def main():
         s = torch.cuda.Stream()
         s.wait_stream(torch.cuda.current_stream())
         with torch.cuda.stream(s):
-            model = DDP(model, device_ids=[args.local_rank], output_device=args.local_rank)
+            model = DDP(model, device_ids=[args.local_rank], output_device=args.local_rank, find_unused_parameters=True)
         torch.cuda.current_stream().wait_stream(s)
 
     # define loss function (criterion) and optimizer
