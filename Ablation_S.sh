@@ -7,8 +7,8 @@ S=1
 K=8
 L=40
 
-wd=5e-5
-lr=0.5
+wd=5e-4
+lr=0.1
 
 # Define the seed values
 seeds=(2020 2024 1314 512 2333)
