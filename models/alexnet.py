@@ -29,10 +29,8 @@ class AlexNet(nn.Module):
             nn.MaxPool2d(kernel_size=3, stride=2),
         )
         self.classifier = nn.Sequential(
-            nn.Dropout(0.1),
             BinarizeConv2dSDP(K, scale, 256 * 6 * 6, 4096, kernel_size=1, padding=0, linear=True, bias=True, binarize_a=binarize_a),
             nn.BatchNorm1d(4096, eps=1e-3, momentum=0.1, affine=True),
-            nn.Dropout(0.1),
             BinarizeConv2dSDP(K, scale, 4096, 4096, kernel_size=1, padding=0, linear=True, bias=True, binarize_a=binarize_a),
             nn.BatchNorm1d(4096, eps=1e-3, momentum=0.1, affine=True),
             nn.Linear(4096, num_classes),
@@ -71,11 +69,9 @@ class AlexNet_1W32A(nn.Module):
             nn.MaxPool2d(kernel_size=3, stride=2),
         )
         self.classifier = nn.Sequential(
-            nn.Dropout(0.1),
             BinarizeConv2dSDP(K, scale, 256 * 6 * 6, 4096, kernel_size=1, padding=0, linear=True, bias=True, binarize_a=False),
             nn.BatchNorm1d(4096, eps=1e-3, momentum=0.1, affine=True),
             nn.ReLU(inplace=True),
-            nn.Dropout(0.1),
             BinarizeConv2dSDP(K, scale, 4096, 4096, kernel_size=1, padding=0, linear=True, bias=True, binarize_a=False),
             nn.BatchNorm1d(4096, eps=1e-3, momentum=0.1, affine=True),
             nn.ReLU(inplace=True),
