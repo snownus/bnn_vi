@@ -8,7 +8,7 @@ from .sdp_wo_entropy import BinarizeConv2dSDP
 
 BN = None
 
-__all__ = ['resnet18_1w1a_recu', 'resnet18_1w32a_recu', 'resnet34_1w1a_recu']
+__all__ = ['resnet18_1w1a_recu', 'resnet18_1w32a_recu', 'resnet34_1w1a_recu', 'resnet34_1w32a_recu']
 
 
 def conv3x3Binary(K, scale, binarize_a, in_planes, out_planes, stride=1):
@@ -166,4 +166,10 @@ def resnet18_1w32a_recu(**kwargs):
 def resnet34_1w1a_recu(**kwargs):
     """Constructs a ResNet-34 model. """
     model = ResNet(BasicBlock, [3, 4, 6, 3], **kwargs, binarize_a=True)
+    return model
+
+
+def resnet34_1w32a_recu(**kwargs):
+    """Constructs a ResNet-34 model. """
+    model = ResNet(BasicBlock, [3, 4, 6, 3], **kwargs, binarize_a=False)
     return model
