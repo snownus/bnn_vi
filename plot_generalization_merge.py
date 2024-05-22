@@ -2,7 +2,10 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 
-fig, axs = plt.subplots(1, 4, figsize=(20, 5))
+
+starting_epochs = 1
+
+fig, axs = plt.subplots(2, 2, figsize=(15, 13))
 
 plot_config = [
     ('complete', 'train', 0, 'Training Loss on Complete Graph'),
@@ -24,8 +27,8 @@ for dataset, split, index, title in plot_config:
     df5 = pd.read_csv(f'robustness/{dataset}_0.01_seedvalue_512_{split}.csv')
     df = pd.concat([df1, df2, df3, df4, df5], axis=1)
 
-    sgd, adam, ours = df.iloc[:, [0, 3, 6, 9, 12]].mean(axis=1)[49:], df.iloc[:, [1, 4, 7, 10, 13]].mean(axis=1)[49:], df.iloc[:, [2, 5, 8, 11, 14]].mean(axis=1)[49:]
-    sgdstd, adamstd, oursstd = df.iloc[:, [0, 3, 6, 9, 12]].std(axis=1)[49:], df.iloc[:, [1, 4, 7, 10, 13]].std(axis=1)[49:], df.iloc[:, [2, 5, 8, 11, 14]].std(axis=1)[49:]
+    sgd, adam, ours = df.iloc[:, [0, 3, 6, 9, 12]].mean(axis=1)[starting_epochs-1:], df.iloc[:, [1, 4, 7, 10, 13]].mean(axis=1)[starting_epochs-1:], df.iloc[:, [2, 5, 8, 11, 14]].mean(axis=1)[starting_epochs-1:]
+    sgdstd, adamstd, oursstd = df.iloc[:, [0, 3, 6, 9, 12]].std(axis=1)[starting_epochs-1:], df.iloc[:, [1, 4, 7, 10, 13]].std(axis=1)[starting_epochs-1:], df.iloc[:, [2, 5, 8, 11, 14]].std(axis=1)[starting_epochs-1:]
 
     # Calculate upper and lower bounds using standard deviation
     sgdupper, adamupper, oursupper = sgd + sgdstd, adam + adamstd, ours + oursstd
@@ -37,42 +40,41 @@ for dataset, split, index, title in plot_config:
     resultslower = [sgdlower, adamlower, ourslower]
     colors = ['lightskyblue', 'lightsalmon', 'lightgreen']
 
-    x = [i for i in range(50, 101)]
-    ax = axs[index]
+    x = [i for i in range(starting_epochs, 101)]
+    ax = axs[index // 2, index % 2]  # Adjusted for 2x2 layout
     for i, label in enumerate(labels):
         ax.plot(x, results[i], color=colors1[i], label=label)
         ax.fill_between(x, resultslower[i], resultsupper[i], color=colors[i], alpha=0.5)
 
     # Adjust y-axis limits based on split and dataset, and add extra space for legend
     if split == 'test' and dataset == 'random':
-        ax.set_ylim(0.990, 1.015)
+        ax.set_ylim(0.990, 1.06)
     if split == 'test' and dataset == 'complete':
-        ax.set_ylim(0.990, 1.035)
+        ax.set_ylim(0.990, 1.08)
     if split == 'train' and dataset == 'random':
-        ax.set_ylim(0.82, 1.03)
+        ax.set_ylim(0.82, 1.30)
     if split == 'train' and dataset == 'complete':
-        ax.set_ylim(0.27, 1.12)
+        ax.set_ylim(0.27, 1.30)
 
     ax.set_xlabel('Epoch', fontweight='bold', fontsize=18)
+    ax.set_ylabel('Loss', fontweight='bold', fontsize=18)
 
     # Set font size and weight for tick labels
     for label in ax.get_xticklabels() + ax.get_yticklabels():
-        # label.set_fontweight('bold')
-        label.set_fontsize('small')  # Reduce the font size for tick labels
+        label.set_fontsize('xx-large')  # Reduce the font size for tick labels
 
     # Add title below each subplot
     ax.set_title(title, fontweight='bold', fontsize=18, pad=10)
 
     # Add individual legends for each subplot
-    # ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15), ncol=3, fontsize='large', frameon=False)
-    ax.legend(loc='upper center', bbox_to_anchor=(0.5, 0.15), ncol=3, columnspacing=0.4, 
+    ax.legend(loc='upper center', bbox_to_anchor=(0.5, 0.12), ncol=3, columnspacing=0.4, 
               frameon=False, prop={'weight': 'bold', 'size': 16})
+
     # Bold plot edges
     for spine in ax.spines.values():
         spine.set_linewidth(2)
 
-# Set the y-axis label for the first subplot
-axs[0].set_ylabel('Loss', fontweight='bold', fontsize=18)
+fig.subplots_adjust(hspace=2)
 
 plt.tight_layout()
 # Save the figure as a PDF
