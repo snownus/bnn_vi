@@ -52,11 +52,12 @@ if __name__ == '__main__':
     epochs = 100
     complete_data, random_data = generate_complete_graph_data(), generate_random_graph_data()
 
-    # random_data = generate_random_graph_data()
-
     for dataset, dataloader in zip(['complete', 'random'], [complete_data, random_data]):
-    # for dataset, dataloader in zip(['random'], [random_data]):
         train_data, test_data, input_channels = dataloader
+        if dataset == 'complete':
+            lr = 0.1
+        elif dataset == 'random':
+            lr = 0.5
         
         BASE1 = models(dataset, "BASE", hidden_channels, -1, -1, input_channels=input_channels)
         sgd_optimizer = torch.optim.SGD(BASE1.parameters(), lr=lr)
@@ -64,8 +65,9 @@ if __name__ == '__main__':
                                                   test_data, init_lr = lr, epochs=epochs)
 
         BASE2 = models(dataset, "BASE", hidden_channels, -1, -1, input_channels=input_channels)
-        adam_optimizer = torch.optim.Adam(BASE2.parameters(), lr=lr)
-        adam_train_losses, adam_test_losses = train(BASE2, adam_optimizer, train_data, test_data)
+        adam_optimizer = torch.optim.Adam(BASE2.parameters(), lr=0.001)
+        adam_train_losses, adam_test_losses = train(BASE2, adam_optimizer, train_data, test_data, 
+                                                    init_lr = 0.001, epochs=epochs)
 
         SDP_model = models(dataset, "SDP", hidden_channels, K, scale, input_channels=input_channels)
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
