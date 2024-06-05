@@ -62,14 +62,8 @@ class BinarizeConv2dSDP(nn.Module):
         self.binarize_out = binarize_out
         
     def forward(self, input):
-        m = self.M.view(self.number_of_weights)
+        w = self.M.view(self.number_of_weights)
 
-        with torch.no_grad():
-            A = m*m
-            # print(f'A.shape: {A.shape}, self.M.shape: {self.M.shape}')
-            m.data = m.data / torch.sqrt(A)
-
-        w = m
         real_weights = w.view(self.shape_sum_w)
         bw = BinaryQuantize().apply(real_weights)
 
