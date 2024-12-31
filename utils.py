@@ -6,8 +6,6 @@ import pandas as pd
 from bokeh.io import output_file, save, show
 from bokeh.plotting import figure
 from bokeh.layouts import column
-from optimizers import SGDAT, Bop,Bop2ndOrder, Bop2ndOrderProb, BopExp, BopExp2, BopExp3, BopExp12, BopExp22, BopExp32
-
 
 
 def setup_logging(log_file='log.txt'):
@@ -60,10 +58,6 @@ class ResultsLog(object):
             plot = column(*self.figures)
             show(plot)
 
-    #def plot(self, *kargs, **kwargs):
-    #    line = Line(data=self.results, *kargs, **kwargs)
-    #    self.figures.append(line)
-
     def image(self, *kargs, **kwargs):
         fig = figure()
         fig.image(*kargs, **kwargs)
@@ -101,16 +95,6 @@ class AverageMeter(object):
 __optimizers = {
     'SGD': torch.optim.SGD,
     'Adam': torch.optim.Adam,
-    'Bop': Bop.Bop,
-    'Bop2ndOrder': Bop2ndOrder.Bop2ndOrder,
-    'SGDAT': SGDAT.SGDAT,
-    'Bop2ndOrderProb':Bop2ndOrderProb.Bop2ndOrderProb,
-    'BopExp':BopExp.BopExp,
-    'BopExp2':BopExp2.BopExp2,
-    'BopExp3':BopExp3.BopExp3,
-    'BopExp12':BopExp12.BopExp12,
-    'BopExp22':BopExp22.BopExp22,
-    'BopExp32':BopExp32.BopExp32,
 }
 
 
@@ -155,14 +139,11 @@ def accuracy(output, target, topk=(1,)):
         res.append(correct_k.mul_(100.0 / batch_size))
     return res
 
-    # kernel_img = model.features[0][0].kernel.data.clone()
-    # kernel_img.add_(-kernel_img.min())
-    # kernel_img.mul_(255 / kernel_img.max())
-    # save_image(kernel_img, 'kernel%s.jpg' % epoch)
 
 def binarize(tensor,quant_mode='det'):
     if quant_mode == 'det':
         return torch.sign(torch.sign(tensor).add(0.1))
+
 
 def binarize_model(model,threshold,quant_mode):
     if quant_mode == 'det':
