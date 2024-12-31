@@ -160,7 +160,7 @@ def main():
         if not os.path.isfile(args.evaluate):
             parser.error('invalid checkpoint: {}'.format(args.evaluate))
         checkpoint = torch.load(args.evaluate)
-        model.load_state_dict(checkpoint['state_dict'])
+        model.load_state_dict(checkpoint['state_dict'], strict=False)
         logging.info("loaded checkpoint '%s' (epoch %s)",
                      args.evaluate, checkpoint['epoch'])
     elif args.resume:
@@ -223,7 +223,8 @@ def main():
         num_workers=args.workers, pin_memory=True)
 
     if args.evaluate:
-        validate(val_loader, model, criterion, 0)
+        loss, top1, top5 = validate(val_loader, model, criterion, 0)
+        print(f'loss: {loss}, top1: {top1}, top5: {top5}, L: {args.L}')
         return
 
     train_data = get_dataset(args.dataset, 'train', transform['train'])
@@ -438,7 +439,7 @@ def forward(data_loader, model, criterion, epoch=0, training=True, fp_optimizer=
         batch_time.update(time.time() - end)
         end = time.time()
 
-        if i % args.print_freq == 0:
+        if i % args.print_freq == 0 and i != 0:
             logging.info('{phase} - Epoch: [{0}][{1}/{2}]\t'
                          'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
                          'Data {data_time.val:.3f} ({data_time.avg:.3f})\t'
