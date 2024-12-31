@@ -1,8 +1,5 @@
 #!/bin/bash
 
-# Array of K values
-# K_values=(2 4 6 8 10)
-
 S=100
 K=2
 L=40
