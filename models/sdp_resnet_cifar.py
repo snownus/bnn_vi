@@ -182,15 +182,3 @@ def resnet18_1w32a_cifar(**kwargs):
         num_classes = 200
     return ResNet(K, scale, BasicBlock_1w32a, [2,2,2,2], [64,128,256,512], num_classes=num_classes)
 
-
-def resnet34_1w1a_cifar(**kwargs):
-    return ResNet(BasicBlock_1w1a, [3,4,6,3],[64,128,256,512],**kwargs)
-
-def resnet50_1w1a_cifar(**kwargs):
-    return ResNet(Bottleneck_1w1a, [3,4,6,3],[64,128,256,512],**kwargs)
-
-def resnet101_1w1a_cifar(**kwargs):
-    return ResNet(Bottleneck_1w1a, [3,4,23,3],[64,128,256,512],**kwargs)
-
-def resnet152_1w1a_cifar(**kwargs):
-    return ResNet(Bottleneck_1w1a, [3,8,36,3],[64,128,256,512],**kwargs)

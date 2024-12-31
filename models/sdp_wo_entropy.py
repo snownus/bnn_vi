@@ -49,8 +49,6 @@ class BinarizeConv2dSDP(nn.Module):
         self.number_of_weights = in_chn * out_chn * kernel_size * kernel_size
         self.shape_w = (K, out_chn, in_chn, kernel_size, kernel_size)
         self.shape_sum_w = (out_chn, in_chn, kernel_size, kernel_size)
-        # self.weights = nn.Parameter(torch.zeros((self.shape_sum_w)), requires_grad=True)
-        # self.weights = nn.Parameter(torch.zeros((1, self.number_of_weights)), requires_grad=True)
         
         self.K = K
         self.scale = scale
@@ -58,11 +56,8 @@ class BinarizeConv2dSDP(nn.Module):
         self.M = nn.Parameter(torch.zeros((self.shape_sum_w)), requires_grad=True)
         self.Z = nn.Parameter(torch.zeros((self.shape_w)), requires_grad=True)
         torch.nn.init.xavier_normal_(self.M.data)
-        # torch.nn.init.xavier_uniform_(self.Z.data)
         torch.nn.init.xavier_normal_(self.Z.data)
 
-        #torch.nn.init.xavier_normal_(self.weights.data)
-        #self.weights.data = torch.normal(0.0, 1.0,size=self.shape_sum_w).cuda() 
         self.linear = linear
         self.in_chn = in_chn
         self.out_chn = out_chn
@@ -75,24 +70,16 @@ class BinarizeConv2dSDP(nn.Module):
         
         # get the i^th column of Z.
         self.sample = nn.Parameter(torch.zeros((1, K)), requires_grad=False)
-        # self.register_buffer('sample', torch.zeros((1, K), requires_grad=False))
 
     def forward(self, input):
-        # bw = BinaryQuantize().apply(self.weights)
-
-        # real_weights = self.weights.view(self.shape_sum_w)
-        # bw = BinaryQuantize().apply(real_weights)
-        
         m = self.M.view(self.number_of_weights)
         z = self.Z.view(self.K, self.number_of_weights)
 
         with torch.no_grad():
             A = m*m + torch.sum(z.T**2,dim=1)/self.scale
-            # print(f'A.shape: {A.shape}, self.M.shape: {self.M.shape}')
             m.data = m.data / torch.sqrt(A)
             z.data = z.data / torch.sqrt(A)
 
-        # w = sdp(m, z, torch.tensor(self.scale), torch.tensor(self.K))
         w = SDP().apply(m, z, self.sample, torch.tensor(self.scale), torch.tensor(self.K), self.training)
         real_weights = w.view(self.shape_sum_w)
 
@@ -149,10 +136,6 @@ class SDP(Function):
             print(f'errors in sample Z!!!')
         zz = torch.mm(rv, z)
         w = zz + m
-        # if training is True:
-        #     w = zz + m
-        # else:
-        #     w = m
         grad_scaling = np.sqrt(scale)
         if sample_sum == 1 or sample_sum == -1:
             grad_scaling = torch.tensor(1.0).cuda()
@@ -162,13 +145,10 @@ class SDP(Function):
 
     @staticmethod
     def backward(ctx, grad_output):
-        # print(f'aaa') two positive gradients -> 12.61; 
         K, sample, rv, grad_scaling = ctx.saved_tensors
         grad_input1, grad_input2 = grad_output.clone(), grad_output.clone()
         grad_m = grad_input1
-        # print(f'grad_m: {grad_m}')
         grad_z = torch.mm(rv.T, grad_input2) * grad_scaling
-        # print(f'grad_z: {grad_z}')
         return grad_m, grad_z, None, None, None, None
 
 
