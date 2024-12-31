@@ -7,5 +7,5 @@ results/
 runs/
 core
 __pycache__
-.vscode/*
+.vscode/
 
