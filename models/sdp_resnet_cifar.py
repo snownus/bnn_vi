@@ -12,6 +12,8 @@ import torch.nn.init as init
 
 from .sdp_wo_entropy import BinarizeConv2dSDP
 
+# from .sdp_wo_z import BinarizeConv2dSDP
+
 
 __all__ =['resnet18_1w1a_cifar', 'resnet18_1w32a_cifar']
 

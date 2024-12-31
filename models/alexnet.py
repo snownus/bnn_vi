@@ -6,6 +6,8 @@ import torch.nn.functional as F
 
 from .sdp_wo_entropy import BinarizeConv2dSDP
 
+# from .sdp_wo_z import BinarizeConv2dSDP
+
 __all__ = ['AlexNet', 'AlexNet_1W32A', 'alexnet_1w1a', 'alexnet_1w32a']
 
 class AlexNet(nn.Module):
