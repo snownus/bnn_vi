@@ -88,8 +88,10 @@ def parse():
                         metavar='N', help='print frequency (default: 10)')
     parser.add_argument('--resume', default='', type=str, metavar='PATH',
                         help='path to latest checkpoint (default: none)')
-    parser.add_argument('-e', '--evaluate', dest='evaluate', action='store_true',
-                        help='evaluate model on validation set')
+    # parser.add_argument('-e', '--evaluate', dest='evaluate', action='store_true',
+    #                     help='evaluate model on validation set')
+    parser.add_argument('-e', '--evaluate', type=str, metavar='FILE',
+                        help='evaluate model FILE on validation set')
     parser.add_argument('--pretrained', dest='pretrained', action='store_true',
                         help='use pre-trained model')
 
@@ -305,6 +307,14 @@ def main():
                 if args.local_rank == 0:
                     logging.info("=> no checkpoint found at '{}'".format(args.resume))
         resume()
+    else:
+        if args.evaluate:
+            if not os.path.isfile(args.evaluate):
+                print('invalid checkpoint: {}'.format(args.evaluate))
+            checkpoint = torch.load(args.evaluate)
+            model.load_state_dict(checkpoint['state_dict'], strict=False)
+            logging.info("loaded checkpoint '%s' (epoch %s)",
+                        args.evaluate, checkpoint['epoch'])
 
     # Data loading code
     if len(args.data) == 1:
@@ -389,7 +399,8 @@ def main():
                                                  collate_fn=collate_fn)
 
     if args.evaluate:
-        validate(val_loader, model, criterion)
+        top1, top5 = validate(val_loader, model, criterion)
+        print(f'top1: {top1}, top5: {top5}')
         return
 
     scaler = torch.cuda.amp.GradScaler(init_scale=args.loss_scale,
