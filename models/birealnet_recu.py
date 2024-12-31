@@ -4,7 +4,9 @@ import torch.utils.model_zoo as model_zoo
 import torch.nn.init as init
 # from modules import *
 
-from .sdp_wo_entropy import BinarizeConv2dSDP
+# from .sdp_wo_entropy import BinarizeConv2dSDP
+
+from .sdp_wo_z import BinarizeConv2dSDP
 
 BN = None
 
@@ -27,13 +29,15 @@ class BasicBlock(nn.Module):
         self.conv1 = conv3x3Binary(K, scale, binarize_a, inplanes, planes, stride)
         self.bn1 = BN(planes)
         if binarize_a:
-            self.nonlinear1 = nn.Hardtanh(inplace=True)
+            # self.nonlinear1 = nn.Hardtanh(inplace=True)
+            self.nonlinear1 = nn.PReLU()
         else:
             self.nonlinear1 = nn.ReLU(inplace=True)
         self.conv2 = conv3x3Binary(K, scale, binarize_a, planes, planes)
         self.bn2 = BN(planes)
         if binarize_a:
-            self.nonlinear2 = nn.Hardtanh(inplace=True)
+            self.nonlinear2 = nn.PReLU()
+            # self.nonlinear2 = nn.Hardtanh(inplace=True)
         else:
             self.nonlinear2 = nn.ReLU(inplace=True)
         self.downsample = downsample
@@ -83,7 +87,8 @@ class ResNet(nn.Module):
         self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3, bias=False)
         self.bn1 = BN(64)
         if binarize_a:
-            self.nonlinear = nn.Hardtanh(inplace=True)
+            self.nonlinear = nn.PReLU()
+            # self.nonlinear = nn.Hardtanh(inplace=True)
         else:
             self.nonlinear = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
