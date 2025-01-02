@@ -9,12 +9,12 @@ wd=1e-5
 epochs=600
 
 # Define the seed values
-# seeds=(2020 2024 1314 512 2333)
-seeds=(2020)
+seeds=(2020 2024 1314 512 2333)
+# seeds=(2020)
 
 # Define the GPU IDs
-# GPU_ids=(0 1 2 3 4)
-GPU_ids=(1)
+GPU_ids=(0 1 2 3 4 5)
+# GPU_ids=(1)
 
 
 # Use paste and process substitution to iterate over seeds and GPU_ids simultaneously
