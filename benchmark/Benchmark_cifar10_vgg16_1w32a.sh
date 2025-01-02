@@ -4,7 +4,7 @@
 # K_values=(2 4 6 8 10)
 
 S=100
-K=1
+K=8
 L=40
 
 lr=0.1
@@ -19,7 +19,7 @@ seeds=(2333)
 
 # Define the GPU IDs
 # GPU_ids=(0 1 2 3 4)
-GPU_ids=(7)
+GPU_ids=(1)
 
 # Use paste and process substitution to iterate over seeds and GPU_ids simultaneously
 paste <(printf "%s\n" "${seeds[@]}") <(printf "%s\n" "${GPU_ids[@]}") | while IFS=$'\t' read -r seed GPU_id
