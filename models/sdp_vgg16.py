@@ -1,8 +1,8 @@
 import torch.nn as nn
 
-# from .sdp_wo_entropy import BinarizeConv2dSDP
+from .sdp_wo_entropy import BinarizeConv2dSDP
 
-from .sdp_wo_z import BinarizeConv2dSDP
+# from .sdp_wo_z import BinarizeConv2dSDP
 
 import torch.nn.functional as F
 
