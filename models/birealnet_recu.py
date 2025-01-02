@@ -2,11 +2,10 @@ import torch.nn as nn
 import math
 import torch.utils.model_zoo as model_zoo
 import torch.nn.init as init
-# from modules import *
 
-# from .sdp_wo_entropy import BinarizeConv2dSDP
+from .sdp_wo_entropy import BinarizeConv2dSDP
 
-from .sdp_wo_z import BinarizeConv2dSDP
+# from .sdp_wo_z import BinarizeConv2dSDP
 
 BN = None
 
