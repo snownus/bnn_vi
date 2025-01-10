@@ -8,15 +8,15 @@ lr=0.1
 wd=5e-4
 epochs=500
 
-dataset=cifar100
+dataset=cifar10
 
 # Define the seed values
-seeds=(2020 2024 1314 512 2333)
-# seeds=(2020)
+# seeds=(2020 2024 1314 512 2333)
+seeds=(2020)
 
 # Define the GPU IDs
-GPU_ids=(2 3 4 5 6)
-# GPU_ids=(7)
+# GPU_ids=(2 3 4 5 6)
+GPU_ids=(7)
 
 # Use paste and process substitution to iterate over seeds and GPU_ids simultaneously
 paste <(printf "%s\n" "${seeds[@]}") <(printf "%s\n" "${GPU_ids[@]}") | while IFS=$'\t' read -r seed GPU_id
