@@ -9,7 +9,7 @@ lr=0.1
 
 # Define the seed values
 # seeds=(2020 2024 1314 512 2333)
-seeds=(2020)
+seeds=(512)
 
 # Define the GPU IDs
 # GPU_ids=(0 1 2 3 4)
