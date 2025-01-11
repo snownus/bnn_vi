@@ -259,7 +259,7 @@ def main():
     if args.local_rank == 0:
         logging.info(f"creating model: {args.arch}")
     model = models.__dict__[args.arch]
-    model_config = {'K': args.K, 'scale': args.scale}#, "binary_opt": args.binary_opt}
+    model_config = {'K': args.K, 'scale': args.scale}
     model = model(**model_config)
 
     if hasattr(torch, 'channels_last') and  hasattr(torch, 'contiguous_format'):
@@ -573,34 +573,6 @@ def train(train_loader, model, criterion, scaler, optimizer, epoch):
         with torch.cuda.amp.autocast(enabled=args.fp16_mode):
             output = model(input)
             loss = criterion(output, target)
-            # L = int(args.L * args.K)
-            # num = sample_uniform_int(0, L + args.K * 2 - 1)
-            # if num < L:
-            #     output = model(input)
-            #     loss = criterion(output, target)
-            # elif L <= num < L + args.K:
-            #     j = num - L
-            #     params = model.named_parameters()
-            #     for name, param in params:
-            #         # print(f'name: {name}, param.shape: {param.shape}')
-            #         if 'sample' in name and 'downsample' not in name:
-            #             param.zero_()
-            #             param[0][j] = 1
-            #     output = model(input)
-            #     loss = criterion(output, target) 
-            # else:
-            #     j = num - L - args.K
-            #     params = model.named_parameters()
-            #     for name, param in params:
-            #         # print(f'name: {name}, param.shape: {param.shape}')
-            #         if 'sample' in name and 'downsample' not in name:
-            #             param.zero_()
-            #             param[0][j] = -1
-            #     output = model(input)
-            #     loss = criterion(output, target) 
-
-            # output = model(input)
-            # loss = criterion(output, target)
 
         # compute output
         if args.prof >= 0: torch.cuda.nvtx.range_push("forward")
@@ -702,7 +674,6 @@ def validate(val_loader, model, criterion):
 
         # compute output
         L = int(args.L)
-        # L = int(args.L * args.K)
         with torch.no_grad():
             output = model(input)
             loss = criterion(output, target)
@@ -715,35 +686,8 @@ def validate(val_loader, model, criterion):
                 total_loss += loss
                 total_output += output
 
-        #     for j in range(args.K):
-        #         params = model.named_parameters()
-        #         for name, param in params:
-        #             # print(f'name: {name}, param.shape: {param.shape}')
-        #             if 'sample' in name and 'downsample' not in name:
-        #                 param.zero_()
-        #                 param[0][j] = 1
-        #         output = model(input)
-        #         total_loss += criterion(output, target)
-        #         total_output += output
-
-        #     for j in range(args.K):
-        #         params = model.named_parameters()
-        #         for name, param in params:
-        #             # print(f'name: {name}, param.shape: {param.shape}')
-        #             if 'sample' in name and 'downsample' not in name:
-        #                 param.zero_()
-        #                 param[0][j] = -1
-        #         output = model(input)
-        #         total_loss += criterion(output, target)
-        #         total_output += output
-            
-        #     loss = total_loss / (L + args.K * 2)
-        #     output = total_output / (L + args.K * 2)
             loss = total_loss / L
             output = total_output / L
-
-            # output = model(input)
-            # loss = criterion(output, target)
 
         # measure accuracy and record loss
         prec1, prec5 = accuracy(output.data, target, topk=(1, 5))

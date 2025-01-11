@@ -27,15 +27,15 @@ from math import cos, pi
 from models import BinarizeConv2dSDP
 from torch.utils.tensorboard import SummaryWriter
 
-seed_value = 2020   # 设定随机数种子
+seed_value = 2020   
 
 np.random.seed(seed_value)
 random.seed(seed_value)
-os.environ['PYTHONHASHSEED'] = str(seed_value)  # 为了禁止hash随机化，使得实验可复现。
+os.environ['PYTHONHASHSEED'] = str(seed_value)  
 
-torch.manual_seed(seed_value)     # 为CPU设置随机种子
-torch.cuda.manual_seed(seed_value)      # 为当前GPU设置随机种子（只用一块GPU）
-torch.cuda.manual_seed_all(seed_value)   # 为所有GPU设置随机种子（多块GPU）
+torch.manual_seed(seed_value)     
+torch.cuda.manual_seed(seed_value)      
+torch.cuda.manual_seed_all(seed_value)
 
 torch.backends.cudnn.deterministic = True
 
@@ -114,11 +114,11 @@ def main():
     seed_value = args.seed
     np.random.seed(seed_value)
     random.seed(seed_value)
-    os.environ['PYTHONHASHSEED'] = str(seed_value)  # 为了禁止hash随机化，使得实验可复现。
+    os.environ['PYTHONHASHSEED'] = str(seed_value)  
 
-    torch.manual_seed(seed_value)     # 为CPU设置随机种子
-    torch.cuda.manual_seed(seed_value)      # 为当前GPU设置随机种子（只用一块GPU）
-    torch.cuda.manual_seed_all(seed_value)   # 为所有GPU设置随机种子（多块GPU）
+    torch.manual_seed(seed_value)     
+    torch.cuda.manual_seed(seed_value)      
+    torch.cuda.manual_seed_all(seed_value)   
 
     best_prec1 = 0
 
@@ -203,18 +203,6 @@ def main():
     criterion = getattr(model, 'criterion', nn.CrossEntropyLoss)()
     criterion.type(args.type)
     model.type(args.type)
-    
-    # show summary of model
-    # if model_config.get('dataset') == 'imagenet':
-    #     input_size = model_config.get('input_size') or 224
-    #     summary(model, (3, input_size, input_size))
-    # if model_config.get('dataset') == 'tiny_imagenet':
-    #     input_size = model_config.get('input_size') or 64
-    #     summary(model, (3, input_size, input_size))
-    # elif 'cifar' in args.dataset:
-    #     input_size = model_config.get('input_size') or 32
-    #     summary(model, (3, input_size, input_size))
-    
 
     val_data = get_dataset(args.dataset, 'val', transform['eval'])
     val_loader = torch.utils.data.DataLoader(
@@ -246,43 +234,13 @@ def main():
     logging.info("number of full precision parameters: %d", fp_num_parameters)
 
     fp_optimizer = torch.optim.SGD([{'params':model.parameters()}], lr=args.lr, momentum=args.momentum, weight_decay=args.wd)
-
-    # Group parameters based on names. ISSUES: maybe some parameters not in model.named_parameters()
-    # params_with_decay = []
-    # params_without_decay = []
-    # for name, param in model.named_parameters():
-    #     if '.M' in name:
-    #         # print(f'name: {name}')
-    #         params_without_decay.append(param)
-    
-    # id_params_wo_decay = set([id(param) for param in params_without_decay])
-    # params_with_decay = [param for param in model.parameters() if id(param) not in id_params_wo_decay]
-
-    # fp_optimizer = torch.optim.SGD([
-    #     {'params': params_with_decay, 'weight_decay': 1e-4},  # Apply weight decay to specific parameters
-    #     {'params': params_without_decay}  # No weight decay for other parameters
-    # ], lr=args.lr, momentum=args.momentum)
-
-    # lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(fp_optimizer, milestones=args.milestones, gamma=0.1)
-
-    # lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(fp_optimizer, milestones=[60, 90], gamma=0.1)
-    # for i in range(args.start_epoch):
-    #     lr_scheduler.step()
-
     for epoch in range(args.start_epoch, args.epochs):
-        # fp_optimizer = torch.optim.Adam(fp_parameters, lr=0.001)
-        # fp_optimizer = adjust_optimizer(fp_optimizer, epoch, fp_regime)
-        # logging.info('training fp_regime: %s', fp_regime)
-
         # train for one epoch
         train_loss, train_prec1, train_prec5 = train(train_loader, model, criterion, epoch, fp_optimizer)
-        # lr_scheduler.step()
-
         # evaluate on validation set
         val_loss, val_prec1, val_prec5 = validate(
             val_loader, model, criterion, epoch)
 
-        # weight_histograms(writer, epoch, model)
         writer.add_scalar("LR", fp_optimizer.param_groups[0]['lr'], epoch)
         logging.info(f"lr:{fp_optimizer.param_groups[0]['lr']} at epoch:{epoch}")
 
@@ -315,12 +273,6 @@ def main():
         results.add(epoch=epoch + 1, train_loss=train_loss, val_loss=val_loss,
                     train_error1=train_prec1, val_error1=val_prec1,
                     train_error5=train_prec5, val_error5=val_prec5)
-        #results.plot(x='epoch', y=['train_loss', 'val_loss'],
-        #             title='Loss', ylabel='loss')
-        #results.plot(x='epoch', y=['train_error1', 'val_error1'],
-        #             title='Error@1', ylabel='error %')
-        #results.plot(x='epoch', y=['train_error5', 'val_error5'],
-        #             title='Error@5', ylabel='error %')
         results.save()
 
 
@@ -383,9 +335,6 @@ def forward(data_loader, model, criterion, epoch=0, training=True, fp_optimizer=
     end = time.time()
     iters = 0
     for i, (inputs, target) in enumerate(data_loader):
-      # Write the network graph at epoch 0, batch 0
-        # if epoch == 0 and i == 0:
-        #     writer.add_graph(model, input_to_model=inputs[0:2], verbose=False)
         train_loader_len = len(data_loader)
         if args.lr_decay == 'cos' and training:
             adjust_learning_rate_cos(fp_optimizer, epoch, i, train_loader_len)
