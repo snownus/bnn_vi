@@ -64,6 +64,8 @@ All training code are shown in the ``benchmark/`` and it is easy to figure out t
 
 ## Pre-trained Models
 
+
+
 You can download pretrained CIFAR-100 + ResNet18 for binarized weights and real-valued activations here: 
 
 1. VGG16 + CIFAR100 (vgg16_1w32A_model_best.pth.tar):
@@ -83,15 +85,15 @@ For example, you could see the best accuracy at the end of the log file:
 ```results/resnet18_1w32a_cifar100_seed=2020_benchmark_K=8_S=100_L=40_wd=5e-4_lr=0.1_cos_epochs=500.txt.```
 
 
-2. Direct Evaluation: Download the shared pre-trained model and save it to your local directory. 
+2. Direct Evaluation: Download the shared pre-trained model and save it to your local directory. Folder ```evaluate``` contains all bash file to evaluate pretrained models. Please check the model path and data path correctly.
     - Evaluate CIFAR-100 with ResNet18, run the command:
     ```bash
-    bash evaluate_cifar100_resnet18_1W32A.sh
+    bash evaluate/evaluate_cifar100_resnet18_1W32A.sh
     ```
 
     - Evaluate CIFAR-100 with VGG16, run the command:
     ```bash
-    bash evaluate_cifar100_vgg16_1W32A.sh
+    bash evaluate/evaluate_cifar100_vgg16_1W32A.sh
     ```
 
 
@@ -104,3 +106,4 @@ Our model achieves the following performance :
 | ------------------------------ |------------- |
 | VGG16 + CIFAR-100 (1W32A)      | 72.09 ± 0.17 |
 | ResNet18 + CIFAR-100 (1W32A)   | 77.05 ± 0.41 |
+
