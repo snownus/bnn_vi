@@ -62,18 +62,26 @@ All training code are shown in the ``benchmark/`` and it is easy to figure out t
     bash benchmark/Benchmark_cifar10_resnet18_1w1a.sh
     ```
 
-## Pre-trained Models
-
-
+## Results and Pre-trained Models
 
 You can download pretrained CIFAR-100 + ResNet18 for binarized weights and real-valued activations here: 
 
-1. VGG16 + CIFAR100 (vgg16_1w32A_model_best.pth.tar):
-https://drive.google.com/file/d/1fpCf84TS8UbJa3KB7VgxWjo190_4UPjY/view?usp=drive_link
-
-
-2. ResNet18 + CIFAR100 (resnet18_1w32A_model_best.pth.tar)
-https://drive.google.com/file/d/1bHZ-3HXe4EO7sGDx5XpHSENUdKfcUrV0/view?usp=drive_link
+| Model name                     |   Accuracy   |    Pretrained Model  |
+| ------------------------------ |------------- | ---------------------|
+| VGG16 + CIFAR-100 (1W32A)      | 72.09 ± 0.17 |  [Click Here](https://drive.google.com/file/d/1G2p3RIQCE5UQi0dIAU-DsOkVSt3brLiC/view?usp=sharing) |
+| ResNet18 + CIFAR-100 (1W32A)   | 77.05 ± 0.41 |  [Click Here](https://drive.google.com/file/d/1DuL1WkIzWOBciliyWClomcdq7r5Ldzn4/view?usp=sharing)|
+| VGG16 + CIFAR-10 (1W32A)       | 93.25 ± 0.11 |  [Click Here](https://drive.google.com/file/d/1M4dFejHJU5jQDtF3bP_k_KwijvIy_n7I/view?usp=sharing) |
+| ResNet18 + CIFAR-10 (1W32A)    | 95.05 ± 0.10 |  [Click Here](https://drive.google.com/file/d/1BasTsjZgWrFnaLrv-d__KqoBimUqUnxy/view?usp=sharing) |
+| ResNet18 + Tiny-ImageNet (1W32A) |  58.98 ± 0.28 | [Click Here](https://drive.google.com/file/d/1CzwoAXbUOvQ4ZQcrt5BFaoB_etgVNDAZ/view?usp=sharing) |
+| -------------------------------- | -------------- | ------------------ |
+| VGG-Small + CIFAR-10 (1W1A) | 92.7 ± 0.1 | [Click Here](https://drive.google.com/file/d/1Jz8qlvQp1uHJCWHvhkjwkA6aVLods5XT/view?usp=sharing) |
+| ResNet18 + CIFAR-10 (1W1A)  | 92.8 ± 0.2 | [Click Here](https://drive.google.com/file/d/15dq4ucMZ1VeOAU9JhVzkc7bFvFTXbggA/view?usp=sharing) |
+|------------------------------------| -------------- | ------------------ |
+| AlexNet + ImageNet (1W1A) | 51.1 | [Click Here](https://drive.google.com/file/d/1GQhWWdwbQk8TPNxB22Uou5dpYePVw-r7/view?usp=sharing) |
+| AlexNet + ImageNet (1W32A) | 59.4 | [Click Here](https://drive.google.com/file/d/1H0OB7_X6c6tNha5eMQYHEaMkwlj3Bt_s/view?usp=sharing) |
+|------------------------------------| -------------- | -------------------- |
+| BiRealNet + ImageNet (1W1A) | 62.1 | [Click Here](https://drive.google.com/file/d/1ew9nP-M_GwfQPSXjWkZUts_cyIQN2yib/view?usp=sharing) | 
+| ResNet18 + ImageNet (1W32A) | 68.2 | [Click Here](https://drive.google.com/file/d/1WAC18mpcQx5DHzMgJgRZ-InL1oMLcTXe/view?usp=sharing) | 
 
 
 ## Evaluation
@@ -85,25 +93,13 @@ For example, you could see the best accuracy at the end of the log file:
 ```results/resnet18_1w32a_cifar100_seed=2020_benchmark_K=8_S=100_L=40_wd=5e-4_lr=0.1_cos_epochs=500.txt.```
 
 
-2. Direct Evaluation: Download the shared pre-trained model and save it to your local directory. Folder ```evaluate``` contains all bash file to evaluate pretrained models. Please check the model path and data path correctly.
+2. Direct Evaluation: Download the shared pre-trained model and save it to your local directory. Folder ```evaluation``` contains all bash file to evaluate pretrained models. Please check the model path and data path correctly.
     - Evaluate CIFAR-100 with ResNet18, run the command:
     ```bash
-    bash evaluate/evaluate_cifar100_resnet18_1W32A.sh
+    bash evaluation/evaluate_cifar100_resnet18_1W32A.sh
     ```
 
     - Evaluate CIFAR-100 with VGG16, run the command:
     ```bash
-    bash evaluate/evaluate_cifar100_vgg16_1W32A.sh
+    bash evaluation/evaluate_cifar100_vgg16_1W32A.sh
     ```
-
-
-## Results
-
-### [Image Classification on CIFAR-100 with Binarized Weights and Real-Valued Activations]
-
-Our model achieves the following performance :
-| Model name                     |   Accuracy   |
-| ------------------------------ |------------- |
-| VGG16 + CIFAR-100 (1W32A)      | 72.09 ± 0.17 |
-| ResNet18 + CIFAR-100 (1W32A)   | 77.05 ± 0.41 |
-

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-model_dir=results/vgg16_cifar100_seed=2333_benchmark_K=8_S=100_L=40_wd=5e-4_lr=0.1_cos_epochs=500
+model_dir=results/vgg16_cifar100_1w32a_seed=2333_benchmark_K=8_S=100_L=40_wd=5e-4_lr=0.1_cos_epochs=500
 
 python main_sdp_cifar.py --model vgg16_cifar100_sdp   \
 --save test/   --dataset cifar100 --binarization  det --wd 5e-4 \

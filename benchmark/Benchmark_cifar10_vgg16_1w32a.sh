@@ -26,7 +26,7 @@ paste <(printf "%s\n" "${seeds[@]}") <(printf "%s\n" "${GPU_ids[@]}") | while IF
 do
   echo "Running with wd=$wd and GPU_id=$GPU_id"
   nohup python ./main_sdp_cifar.py --model vgg16_${dataset}_sdp \
-  --save vgg16_${dataset}_seed=${seed}_benchmark_K=${K}_S=${S}_L=${L}_wd=${wd}_lr=${lr}_cos_epochs=${epochs} \
+  --save vgg16_${dataset}_1w32a_seed=${seed}_benchmark_K=${K}_S=${S}_L=${L}_wd=${wd}_lr=${lr}_cos_epochs=${epochs} \
   --dataset ${dataset} --binarization  det --wd ${wd} --lr ${lr} --lr_decay cos \
   --input_size 32 --epochs ${epochs} -b 256 -j 10 -K $K -L $L --seed $seed -scale $S --gpus ${GPU_id} \
   > /dev/null 2>&1 &
